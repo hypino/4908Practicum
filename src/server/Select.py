@@ -4,10 +4,10 @@ import socket
 
 import Sensor
 
+LOCALHOST = '127.0.0.1'
+LOCALPORT = 51011
 #Expected size of the packet data from a sensor
 BUFFER_SIZE = 70
-#Connected sensors
-numConnected = 0
 """Will collect data from all of the connected sensors
 
 Thread that will constantly check all sensors for
@@ -21,28 +21,43 @@ Author: Tyler Allison
 class SensorDataCollector(threading.Thread):
     
     def __init__(self, sensorList):
+        self.__disconnected = []
         self.__sensorList = sensorList
+        self.__sendBuffer = []
+        self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.__localSocket.bind((LOCALHOST, LOCALPORT))
+        self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.run()
         
     def run(self):
         while True:
             # wait for data from sensors, wlist and xlist can be empty
             active = select.select(self.__sensorList, [], [])
-            #initialize send buffer
-            sendBuffer = []            
             for sensor in active[0]:
-                getSensorData(sensor, sendBuffer)
+                getSensorData(sensor)
             #write all data to database
-            #write all data to sending buffer
+            #write all data to client handler
+            for data in self.__sendBuffer:
+                self.__localSocket.send(data)
+            #remove all sensors that disconnected
+            for old in self.__disconnected:
+                self.__sensorList.remove(old)
+            #clear list
+            del self.__sendBuffer[:]
+            del self.__disconnected[:]
                 
-    def getSensorData(self, sensor, sendBuffer):
+    def getSensorData(self, sensor:
         #debugging
         assert isinstance(sensor, Sensor.Sensor), "%s is not a socket descriptor" % sensor
         
         #get data from socket
         raw = sensor.fileno().recv(BUFFER_SIZE)
-        assert len(raw) == BUFFER_SIZE, "Data received not %d bytes" % BUFFER_SIZE 
+        
+        #Did the sensor connection end?
+        if(len(raw) == 0):
+            #remove it later
+            self.__disconnected.append(sensor)
         
         #Append to sending buffer
-        sendBuffer.append(raw)
+        self.__sendBuffer.append(raw)
         
