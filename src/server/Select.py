@@ -22,8 +22,8 @@ class SensorDataCollector(threading.Thread):
     
     def __init__(self, sensorList):
         self.__disconnected = []
+        self.__sendBuffer = []        
         self.__sensorList = sensorList
-        self.__sendBuffer = []
         self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.__localSocket.bind((LOCALHOST, LOCALPORT))
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -36,28 +36,26 @@ class SensorDataCollector(threading.Thread):
             for sensor in active[0]:
                 getSensorData(sensor)
             #write all data to database
+            
             #write all data to client handler
             for data in self.__sendBuffer:
                 self.__localSocket.send(data)
             #remove all sensors that disconnected
             for old in self.__disconnected:
                 self.__sensorList.remove(old)
-            #clear list
+            #clear lists
             del self.__sendBuffer[:]
             del self.__disconnected[:]
                 
     def getSensorData(self, sensor:
         #debugging
         assert isinstance(sensor, Sensor.Sensor), "%s is not a socket descriptor" % sensor
-        
         #get data from socket
         raw = sensor.fileno().recv(BUFFER_SIZE)
-        
         #Did the sensor connection end?
         if(len(raw) == 0):
             #remove it later
             self.__disconnected.append(sensor)
-        
         #Append to sending buffer
         self.__sendBuffer.append(raw)
         
