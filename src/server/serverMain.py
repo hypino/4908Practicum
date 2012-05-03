@@ -34,6 +34,7 @@ sensorList = []
 # start message
 startMSG = "00"
 
+
 # Tyler's thread
 class SelectThread(threading.Thread):
     def __init__():
