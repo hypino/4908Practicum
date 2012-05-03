@@ -46,6 +46,8 @@ def Main():
     
     # command-line arguments handling for options goes here
     
+    # fork ClientListener here
+    
     # creating Tyler's thread
     #st = SelectThread()
     
@@ -96,6 +98,7 @@ def Main():
             dataSock.connect((sensorIP[0], port))
             # Send START msg
             dataSock.send(startMSG)
+            # close the socket
             dataSock.close()
             
         except socket.error:
