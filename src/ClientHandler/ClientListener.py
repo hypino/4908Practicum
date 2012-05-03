@@ -32,14 +32,14 @@ an instance of ClientAdder, which updates the new client's data, adds the client
 
 class ClientListener():
     
-    def __init__(self, clientList, bufferLock):
-        self.clientList = clientList  # the list of connected clients
+    def __init__(self):
         self.listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listenSocket.bind((CHC.HOST, CHC.LISTENPORT))
         self.listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.listLock = threading.Semaphore()
-        clientServer = ClientServer(clientList, self.listLock) 
-        
+        clientServer = ClientServer(clientList, self.listLock)
+        self.clienList = []
+        clientServer.run()
     
     def listen():
         while(1):
@@ -47,4 +47,5 @@ class ClientListener():
             newSock, newAdd = self.listenSocket.accept()
             newSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             adder = ClientAdder(newSock, self.clientList, self.listLock)
+            adder.run()
             

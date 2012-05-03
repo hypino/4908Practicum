@@ -38,7 +38,7 @@ class ClientAddr(threading.Thread):
         self.controlSocket.send(CHC.CONTROL_COMMAND_STOP)
         self.controlSocket.rec(1) # wait for return message from select thread
         
-        # Send read history from pytable and send to new client
+        # read history from pytable and send to new client
         
         self.listLock.acquire()  # attempt to gain access to the client list
         self.clientList.append(self.clientSocket)
