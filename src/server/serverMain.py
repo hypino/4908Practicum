@@ -132,7 +132,7 @@ import datetime
 
 dataFile = openFile(datetime.now(), mode = "w", title = "Sensor data file")
 group = dataFile.createGroup("/", 'sensorData', 'Group of data from sensors')
-table = h5file.createTable(group, 'data', Particle, "Data since %s" % datetime.now())
+table = h5file.createTable(group, 'data', Record, "Data since %s" % datetime.now())
 row = table.row
 
 # instead of 10 in xrange(10), put number of sensors
