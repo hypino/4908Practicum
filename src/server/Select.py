@@ -6,7 +6,8 @@ import os
 import Sensor
 from ClientHandlerConstants import LOCALDATA, DATASIZE
 
-
+#Timeout for select to update it's sensor list if needed
+SELECT_TIMEOUT = 0.1
 """Will collect data from all of the connected sensors
 
 Thread that will constantly check all sensors for
@@ -19,9 +20,10 @@ Author: Tyler Allison
 """
 class SensorDataCollector(threading.Thread):
     
-    def __init__(self, sensorList):
+    def __init__(self, sensorList, dbLock):
         self.__disconnected = []
         self.__sendBuffer = []        
+        self.__lock = dbLock
         self.__sensorList = sensorList
         self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         #Remove file if it exists from previous run
@@ -37,7 +39,7 @@ class SensorDataCollector(threading.Thread):
     def run(self):
         while True:
             # wait for data from sensors, wlist and xlist can be empty
-            active = select.select(self.__sensorList, [], [])
+            active = select.select(self.__sensorList, [], [], SELECT_TIMEOUT)
             for sensor in active[0]:
                 getSensorData(sensor)
             #write all data to database
