@@ -22,8 +22,7 @@ import pipes
 
 
 import ClientHandlerConstants as CHC
-import ClientAdder as ca
-import ClientServer as cs
+
 
 """
 This class listens on a TCP port for client connections and accepts the connection.  It then creates 
@@ -38,7 +37,7 @@ class ClientListener():
         self.__listenSocket.bind((CHC.HOST, CHC.LISTENPORT))
         self.__listLock = threading.Semaphore()
         self._clientList = []
-        self.__clientServer = cs.ClientServer(self._clientList, self.__listLock)
+        self.__clientServer = ClientServer(self._clientList, self.__listLock)
         self.__dbLock = dbLock
 	self.listen()
     
@@ -47,6 +46,67 @@ class ClientListener():
             self.__listenSocket.listen(5) #allows for a backlog of 5 sockets
             newSock, newAdd = self.__listenSocket.accept()
             newSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            adder = ca.ClientAdder(newSock, self._clientList, self.__listLock, self.__dbLock)
+            adder = ClientAdder(newSock, self._clientList, self.__listLock, self.__dbLock)
+
+
+class ClientAddr(threading.Thread):
+    
+    def __init__(self, clientSocket, clientList, clientListLock, dbLock):
+        threading.Thread.__init__(self, name='client_addition_thread')
+        
+        self.__clientSocket = clientSocket
+        self.__clientList = clientList
+        self.__listLock = clientListLock 
+        self.__dbLock =  dbLock
+        self.run()
+            
+    def run(self):
+        
+	    # read history from pytable and send to new client	
+
+	    # while still reading the db 
+		    # self.dbLock.acquire()
+		    # data = read hunk from database 
+		    # self.clientSocket.send(data)
+		    # self.dbLock.release()
+ 
+        self.clientListLock.acquire()  # attempt to gain access to the client list
+        self.clientList.append(self.clientSocket)
+        self.clientListLock.release()
+
+
+class ClientServer(threading.Thread):
+    
+    def __init__(self, clientList, listLock):
+        threading.Thread.__init__(self, name='client_addition_thread')
+            
+        self.__clientList = clientList
+        self.__listLock = listLock
+        self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        
+        while(1):	        
+            try:                
+                self.__localSocket.connect(CHC.LOCALDATA)
+                print ("local Connection")
+                break
+            except:
+                continue
+	    self.run()
+            
+    def run(self):
+        
+        while(1):
+            
+            # read data from self.localSocket
+            data = []
+            while len(data) < CHC.DATASIZE:
+                data.append(self.__localSocket.recv(CHC.DATASIZE))
+            
+            stringData = ''.join(data)    
+            self.listLock.acquire() # attempt to gain access to the client list
+            # loop through the list and send the data to clients
+            self.listLock.release() # release the list
+            
             
             
