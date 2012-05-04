@@ -36,7 +36,7 @@ class SensorDataCollector(threading.Thread):
         self.__localSocket.listen(1)
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         #Need to wait until the server connects before we can start
-        self.__localSocket.accept()
+        self.__localSend, self.__localAddr = self.__localSocket.accept()
         self.run()
         
     def run(self):
@@ -49,7 +49,7 @@ class SensorDataCollector(threading.Thread):
             
             #write all data to client handler
             for data in self.__sendBuffer:
-                self.__localSocket.send(data)
+                self.__localSend.send(data)
             #remove all sensors that disconnected
             for old in self.__disconnected:
                 self.__sensorList.remove(old)
