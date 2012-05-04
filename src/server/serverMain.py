@@ -120,34 +120,3 @@ def Main():
 
 if __name__ == '__main__':
     Main()
-
-
-
-
-
-
-import tables
-import numpy
-import datetime
-
-dataFile = openFile(datetime.now(), mode = "w", title = "Sensor data file")
-group = dataFile.createGroup("/", 'sensorData', 'Group of data from sensors')
-table = h5file.createTable(group, 'data', Record, "Data since %s" % datetime.now())
-row = table.row
-
-# instead of 10 in xrange(10), put number of sensors
-for i in xrange(10):
-    row['timestamp'] = 
-    row['col1'] = 
-    row['col2'] = 
-    row['col3'] = 
-    row['col4'] = 
-    row['col5'] = 
-    row['col6'] = 
-    row['col7'] = 
-    row['col8'] = 
-    # adding this row to the table
-    row.append()
-    
-# this saves the table to the file    
-table.flush()
