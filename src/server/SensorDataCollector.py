@@ -35,6 +35,8 @@ class SensorDataCollector(threading.Thread):
         self.__localSocket.bind(LOCALDATA)
         self.__localSocket.listen(1)
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        #Need to wait until the server connects before we can start
+        self.__localSocket.accept()
         self.run()
         
     def run(self):
