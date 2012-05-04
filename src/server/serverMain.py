@@ -19,11 +19,13 @@
 
 from sys import *
 import select, socket
+import os
 import time
 import Queue
 import threading
 import argparse
 import Sensor as s
+import ClientListener as cl
 
 # broadcasting IP and port
 addr = ("0.0.0.0", 57002)
@@ -45,6 +47,14 @@ def Main():
     print "server running..."
     
     # command-line arguments handling for options goes here
+    
+    # forking a process that handles clients
+    child_pid = os.fork()
+    if child_pid == 0:
+        clientHandler = cl.ClientListener()
+        clientHandler.listen()
+    else:
+        print "Parent Process: PID# %s" % os.getpid()    
     
     # creating Tyler's thread
     #st = SelectThread()
@@ -96,6 +106,7 @@ def Main():
             dataSock.connect((sensorIP[0], port))
             # Send START msg
             dataSock.send(startMSG)
+            # close the socket
             dataSock.close()
             
         except socket.error:
