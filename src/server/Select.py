@@ -4,11 +4,9 @@ import socket
 import os
 
 import Sensor
+from ClientHandlerConstants import LOCALDATA, DATASIZE
 
-LOCALHOST = '127.0.0.1'
-LOCALPORT = 51011
-#Expected size of the packet data from a sensor
-BUFFER_SIZE = 70
+
 """Will collect data from all of the connected sensors
 
 Thread that will constantly check all sensors for
@@ -28,11 +26,11 @@ class SensorDataCollector(threading.Thread):
         self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         #Remove file if it exists from previous run
         try:
-            os.remove("/tmp/socket")
+            os.remove(LOCALDATA)
         except OSError:
             pass
         #Create the socket at the file location
-        self.__localSocket.bind("/tmp/socket")
+        self.__localSocket.bind(LOCALDATA)
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.run()
         
@@ -58,7 +56,7 @@ class SensorDataCollector(threading.Thread):
         #debugging
         assert isinstance(sensor, Sensor.Sensor), "%s is not a socket descriptor" % sensor
         #get data from socket
-        raw = sensor.fileno().recv(BUFFER_SIZE)
+        raw = sensor.fileno().recv(DATASIZE)
         #Did the sensor connection end?
         if(len(raw) == 0):
             #remove it later
