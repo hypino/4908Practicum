@@ -7,5 +7,8 @@ class Sensor(object):
     def getSerial(self):
         return self.__serialNumber
     
-    def fileno():
+    def fileno(self):
         return self.__socket.fileno()
+    
+    def getSocket(self):
+        return self.__socket

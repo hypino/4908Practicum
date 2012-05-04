@@ -2,8 +2,10 @@ import threading
 import select
 import socket
 import os
+import struct
 
 import Sensor
+import database
 from ClientHandlerConstants import LOCALDATA, DATASIZE
 
 #Timeout for select to update it's sensor list if needed
@@ -46,12 +48,13 @@ class SensorDataCollector(threading.Thread):
             for sensor in active[0]:
                 getSensorData(sensor)
             #write all data to database
-            
+            appendToDatabase(self.__sendBuffer)
             #write all data to client handler
             for data in self.__sendBuffer:
                 self.__localSend.send(data)
             #remove all sensors that disconnected
             for old in self.__disconnected:
+                old.getSocket().close()
                 self.__sensorList.remove(old)
             #clear lists
             del self.__sendBuffer[:]
@@ -61,7 +64,8 @@ class SensorDataCollector(threading.Thread):
         #debugging
         assert isinstance(sensor, Sensor.Sensor), "%s is not a socket descriptor" % sensor
         #get data from socket
-        raw = sensor.fileno().recv(DATASIZE)
+        raw = (bytearray)(sensor.getSerial())
+        raw += sensor.fileno().recv(DATASIZE)
         #Did the sensor connection end?
         if(len(raw) == 0):
             #remove it later
@@ -69,3 +73,8 @@ class SensorDataCollector(threading.Thread):
         #Append to sending buffer
         self.__sendBuffer.append(raw)
         
+    def appendToDatabase(self, data):
+        for line in data:
+            row = struct.unpack('iiidddddddd', line)
+            database.DataHandler.appendRow(row)
+            
