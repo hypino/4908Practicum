@@ -1,6 +1,7 @@
 import threading
 import select
 import socket
+import os
 
 import Sensor
 
@@ -25,7 +26,13 @@ class SensorDataCollector(threading.Thread):
         self.__sendBuffer = []        
         self.__sensorList = sensorList
         self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.__localSocket.bind((LOCALHOST, LOCALPORT))
+        #Remove file if it exists from previous run
+        try:
+            os.remove("/tmp/socket")
+        except OSError:
+            pass
+        #Create the socket at the file location
+        self.__localSocket.bind("/tmp/socket")
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.run()
         
@@ -47,7 +54,7 @@ class SensorDataCollector(threading.Thread):
             del self.__sendBuffer[:]
             del self.__disconnected[:]
                 
-    def getSensorData(self, sensor:
+    def getSensorData(self, sensor):
         #debugging
         assert isinstance(sensor, Sensor.Sensor), "%s is not a socket descriptor" % sensor
         #get data from socket
