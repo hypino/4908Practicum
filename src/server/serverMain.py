@@ -51,6 +51,7 @@ def Main():
     # forking a process that handles clients
     child_pid = os.fork()
     if child_pid == 0:
+        print "Child Process: PID# %s" % os.getpid()  
         clientHandler = cl.ClientListener()
         clientHandler.listen()
     else:
@@ -61,6 +62,7 @@ def Main():
     
     # creating UDP listening socket
     listenSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    listenSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listenSock.bind(addr)
     # non blocking socket
     listenSock.setblocking(0)

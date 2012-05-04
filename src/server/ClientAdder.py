@@ -26,12 +26,12 @@ class ClientAddr(threading.Thread):
     def __init__(self, clientSocket, clientList, listLock):
             threading.Thread.__init__(self, name='client_addition_thread')
             
-            self.clientSocket = clientSocket
-            self.clientList = clientList
-            self.listLock = listLock
-            self.controlSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.controlSocket.bind((CHC.LISTENPORT, CHC.COMMPORT))
-            self.controlSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)            
+            self.__clientSocket = clientSocket
+            self.__clientList = clientList
+            self.__listLock = listLock
+            self.__controlSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.__controlSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)            
+            self.__controlSocket.bind((CHC.LISTENPORT, CHC.COMMPORT))
             
     def run(self):
         

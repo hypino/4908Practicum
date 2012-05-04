@@ -21,16 +21,16 @@ import threading
 
 import ClientHandlerConstants as CHC
 
-class ClientAddr(threading.Thread):
+class ClientServer(threading.Thread):
     
     def __init__(self, clientList, listLock):
             threading.Thread.__init__(self, name='client_addition_thread')
             
-            self.clientList = clientList
-            self.listLock = listLock
-            self.localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.localSocket.bind((CHC.LOCALHOST, CHC.DATAPORT))
-            self.localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.__clientList = clientList
+            self.__listLock = listLock
+            self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	    self.__localSocket.connect(LOCALDATA)
             
     def run(self):
         
@@ -39,7 +39,7 @@ class ClientAddr(threading.Thread):
             # read data from self.localSocket
             data = []
             while len(data) < CHC.DATASIZE:
-                data.append(self.localSocket.recv(CHC.DATASIZE))
+                data.append(self.__localSocket.recv(CHC.DATASIZE))
             
             stringData = ''.join(data)    
             self.listLock.acquire() # attempt to gain access to the client list

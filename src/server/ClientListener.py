@@ -22,8 +22,8 @@ import pipes
 
 
 import ClientHandlerConstants as CHC
-import ClientAdder
-import ClientServer
+import ClientAdder as ca
+import ClientServer as cs
 
 """
 This class listens on a TCP port for client connections and accepts the connection.  It then creates 
@@ -33,19 +33,19 @@ an instance of ClientAdder, which updates the new client's data, adds the client
 class ClientListener():
     
     def __init__(self):
-        self.listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listenSocket.bind((CHC.HOST, CHC.LISTENPORT))
-        self.listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listLock = threading.Semaphore()
-        clientServer = ClientServer(clientList, self.listLock)
-        self.clienList = []
-        clientServer.run()
+        self.__listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.__listenSocket.bind((CHC.HOST, CHC.LISTENPORT))
+        self.__listLock = threading.Semaphore()
+        self._clientList = []
+        self.__clientServer = cs.ClientServer(self._clientList, self.__listLock)
+        self.__clientServer.run()
     
-    def listen():
+    def listen(self):
         while(1):
-            self.listenSocket.listen(5) #allows for a backlog of 5 sockets
-            newSock, newAdd = self.listenSocket.accept()
+            self.__listenSocket.listen(5) #allows for a backlog of 5 sockets
+            newSock, newAdd = self.__listenSocket.accept()
             newSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            adder = ClientAdder(newSock, self.clientList, self.listLock)
+            adder = ca.ClientAdder(newSock, self._clientList, self.__listLock)
             adder.run()
             
