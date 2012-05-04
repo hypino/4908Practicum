@@ -48,5 +48,5 @@ class ClientListener():
             newSock, newAdd = self.__listenSocket.accept()
             newSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             adder = ca.ClientAdder(newSock, self._clientList, self.__listLock, self.__dbLock)
-            
+            adder.run()
             
