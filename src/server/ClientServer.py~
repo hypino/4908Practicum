@@ -18,20 +18,26 @@ ClientServer
 
 import socket
 import threading
-import os
 
 import ClientHandlerConstants as CHC
 
 class ClientServer(threading.Thread):
     
     def __init__(self, clientList, listLock):
-            threading.Thread.__init__(self, name='client_addition_thread')
+        threading.Thread.__init__(self, name='client_addition_thread')
             
-            self.__clientList = clientList
-            self.__listLock = listLock
-            self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	    self.__localSocket.connect(LOCALDATA)
+        self.__clientList = clientList
+        self.__listLock = listLock
+        self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        
+        while(1):	        
+            try:                
+                self.__localSocket.connect(CHC.LOCALDATA)
+                print ("local Connection")
+                break
+            except:
+                continue
 	    self.run()
             
     def run(self):
