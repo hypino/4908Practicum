@@ -1,0 +1,33 @@
+SensorDataCollector Thread:
+
+    initialize sendbuffer
+    take reference to sensor list
+    create local Unix socket for IPC
+    try to remove local socket if it already exists
+    bind local socket
+    listen for 1 client
+    accept the client
+    run the main thread loop
+
+    forever:
+	select (poll on all sensors for data)
+	for each sensor that is active with data
+	    getSensorData
+        append all data to database
+        for each sensor that disconnected
+	    close socket
+	    remove socket from sensor list
+	clear buffers and lists
+
+getSensorData:
+
+    get the sensor serial number
+    recv 70 bytes from sensor (size of packet)
+    append 70 bytes to sensor serial number
+    if recv returned no data, put sensor in a list to be closed later
+    put data into the sendbuffer
+
+appendToDatabase:
+    for each line in the data
+	create a new table row
+	append to main database

@@ -65,9 +65,9 @@ class SensorDataCollector(threading.Thread):
         assert isinstance(sensor, Sensor.Sensor), "%s is not a socket descriptor" % sensor
         #get data from socket
         raw = (bytearray)(sensor.getSerial())
-        raw += sensor.fileno().recv(DATASIZE)
-        #Did the sensor connection end?
-        if(len(raw) == 0):
+        raw += sensor.getSocket().recv(DATASIZE)
+        #Did the sensor connection end? 2 because length of serial number. 
+        if(len(raw) == 2):
             #remove it later
             self.__disconnected.append(sensor)
         #Append to sending buffer
