@@ -24,7 +24,8 @@ class DataHandler():
         dataFile.createTable(group, 'data', Record, "Data since %s" % datetime.now())
         dataFile.close()
     
-    def appendRow((serialNum, timeSec, timeMilli, col1, col2, col3, col4, col5, col6, col7, col8)):
+    def appendRow(data):
+        assert len(data) == 11, "Data is not formatted correctly for database"
         #open PyTables table
         dataFile = openFile('SensorDatabase', mode = "a", title = "Sensor data file")
         #get the data table
@@ -33,17 +34,17 @@ class DataHandler():
         
         # instead of 10 in xrange(10), put number of sensors
         for i in xrange(10):
-            row['serialNum'] = serialNum
-            row['timeSec'] = timeSec
-            row['timeMilli'] = timeMilli
-            row['col1'] = col1
-            row['col2'] = col2
-            row['col3'] = col3
-            row['col4'] = col4
-            row['col5'] = col5
-            row['col6'] = col6
-            row['col7'] = col7
-            row['col8'] = col8
+            row['serialNum'] = data[0]
+            row['timeSec'] = data[1]
+            row['timeMilli'] = data[2]
+            row['col1'] = data[3]
+            row['col2'] = data[4]
+            row['col3'] = data[5]
+            row['col4'] = data[6]
+            row['col5'] = data[7]
+            row['col6'] = data[8]
+            row['col7'] = data[9]
+            row['col8'] = data[10]
             # adding this row to the table
             row.append()
             
