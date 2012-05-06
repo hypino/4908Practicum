@@ -1,0 +1,16 @@
+Database class:
+
+    init:
+	create database file in write mode (overwrites, currently)
+	create sensor data group
+	create data table
+	close file
+
+    append row:
+	open database in append mode
+	grab reference to data table
+	create a new row
+	fill in columns of the row
+	append new row to table
+	save the database
+	close the database
