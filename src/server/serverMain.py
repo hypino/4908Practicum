@@ -27,7 +27,7 @@ import argparse
 
 import Sensor as s
 import ClientListener as cl
-from SensorDataCollector import SensorDataCollector
+import SensorDataCollector
 
 # broadcasting IP and port
 addr = ("0.0.0.0", 57002)
@@ -100,11 +100,6 @@ def Main():
             sensorList.append(newSensor)
             print "Sensor %d found" % serialNum        
             
-            # debugging code - printing the sensors in the list
-            #for j in sensorList:
-            #    print j.getSerial()
-            #print "---"
-
             # Connect
             dataSock.connect((sensorIP[0], port))
             # Send START msg
