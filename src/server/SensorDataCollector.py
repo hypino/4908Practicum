@@ -22,10 +22,9 @@ Author: Tyler Allison
 """
 class SensorDataCollector(threading.Thread):
     
-    def __init__(self, sensorList, dbLock):
+    def __init__(self, sensorList):
         self.__disconnected = []
-        self.__sendBuffer = []        
-        self.__lock = dbLock
+        self.__sendBuffer = []
         self.__sensorList = sensorList
         self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         #Remove file if it exists from previous run
