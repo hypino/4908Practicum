@@ -96,17 +96,19 @@ class ClientServer(threading.Thread):
             
     def run(self):
         
+        data = []
+        
         while(1):
             
             # read data from self.localSocket
-            data = []
             while len(data) < CHC.DATASIZE:
                 data.append(self.__localSocket.recv(CHC.DATASIZE))
             
             stringData = ''.join(data)    
-            self.listLock.acquire() # attempt to gain access to the client list
+            self.__listLock.acquire() # attempt to gain access to the client list
             # loop through the list and send the data to clients
-            self.listLock.release() # release the list
+            self.__listLock.release() # release the list
+            del data[:]
             
             
             
