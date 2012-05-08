@@ -68,9 +68,9 @@ class ClientAddr(threading.Thread):
 		    # data = read hunk from database
             # self.clientSocket.send(data)
 		    
-        self.clientListLock.acquire()  # attempt to gain access to the client list
-        self.clientList.append(self.clientSocket)
-        self.clientListLock.release()
+        self.__listLock.acquire()  # attempt to gain access to the client list
+        self.__clientList.append(self.__clientSocket)
+        self.__listLock.release()
 
 
 
