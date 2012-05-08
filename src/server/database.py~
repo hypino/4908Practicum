@@ -21,7 +21,7 @@ class DataHandler():
     
     def __init__(self):
         self.__lock = Semaphore()
-        dataFile = openFile('SensorDatabase', mode = "w", title = "Sensor data file")
+        dataFile = openFile('../data/SensorDatabase', mode = "w", title = "Sensor data file")
         group = dataFile.createGroup("/", 'sensorData', 'Group of data from sensors')
         dataFile.createTable(group, 'data', Record, "Data since %s" % datetime.now())
         dataFile.close()

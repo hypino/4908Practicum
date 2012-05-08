@@ -19,6 +19,6 @@ ClientHandler Constants
 
 HOST = ''
 LOCALHOST = '127.0.0.1'
-LISTENPORT = 4908
+HOSTPORT = 4908
 
 

@@ -15,19 +15,16 @@ class Client():
         self.__socket.bind((CC.HOST, CC.LISTENPORT))
         self.__socket.connect((HOST, HOSTPORT))
         db = DataHandler()
-        self.__dataCollector = DataCollector(self.__socket)
+        getData()
         self.__ui = UICollector()
+        
 
-class DataCollector(threading.Thread):
-    
-    def __init__(self, socket):
+    def getData(self):
         
-        self.__socket = socket
-        self.run()
+        data = self.__socket.recv(CC.PACKETSIZE)
+        
 
-    def run(self):
-        
-        
+   
         
 
 class UICollector(threading.Thread):    
