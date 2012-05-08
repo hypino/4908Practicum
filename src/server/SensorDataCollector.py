@@ -74,6 +74,6 @@ class SensorDataCollector(threading.Thread):
         
     def appendToDatabase(self, data):
         for line in data:
-            row = struct.unpack('iiidddddddd', line)
+            row = struct.unpack('hihdddddddd', line)
             database.DataHandler.appendRow(row)
             
