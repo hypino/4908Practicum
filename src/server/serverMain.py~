@@ -27,7 +27,7 @@ import argparse
 
 import Sensor as s
 import ClientListener as cl
-from SensorDataCollector import SensorDataCollector
+import SensorDataCollector
 
 # broadcasting IP and port
 addr = ("0.0.0.0", 57002)
@@ -54,12 +54,12 @@ def Main():
     child_pid = os.fork()
     if child_pid == 0:
         print "Child Process: PID# %s" % os.getpid()  
-        clientHandler = cl.ClientListener(dbLock)
+        clientHandler = cl.ClientListener()
     else:
         print "Parent Process: PID# %s" % os.getpid()    
     
     # creating Tyler's thread
-    sdc = SensorDataCollector(sensorList, dbLock)
+    sdc = SensorDataCollector(sensorList)
     
     # creating UDP listening socket
     listenSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -100,11 +100,6 @@ def Main():
             sensorList.append(newSensor)
             print "Sensor %d found" % serialNum        
             
-            # debugging code - printing the sensors in the list
-            #for j in sensorList:
-            #    print j.getSerial()
-            #print "---"
-
             # Connect
             dataSock.connect((sensorIP[0], port))
             # Send START msg
@@ -120,34 +115,3 @@ def Main():
 
 if __name__ == '__main__':
     Main()
-
-
-
-
-
-
-import tables
-import numpy
-import datetime
-
-dataFile = openFile(datetime.now(), mode = "w", title = "Sensor data file")
-group = dataFile.createGroup("/", 'sensorData', 'Group of data from sensors')
-table = h5file.createTable(group, 'data', Record, "Data since %s" % datetime.now())
-row = table.row
-
-# instead of 10 in xrange(10), put number of sensors
-for i in xrange(10):
-    row['timestamp'] = 
-    row['col1'] = 
-    row['col2'] = 
-    row['col3'] = 
-    row['col4'] = 
-    row['col5'] = 
-    row['col6'] = 
-    row['col7'] = 
-    row['col8'] = 
-    # adding this row to the table
-    row.append()
-    
-# this saves the table to the file    
-table.flush()

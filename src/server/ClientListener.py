@@ -31,15 +31,14 @@ an instance of ClientAdder, which updates the new client's data, adds the client
 
 class ClientListener():
     
-    def __init__(self, dbLock):
+    def __init__(self):
         self.__listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__listenSocket.bind((CHC.HOST, CHC.LISTENPORT))
         self.__listLock = threading.Semaphore()
         self._clientList = []
         self.__clientServer = ClientServer(self._clientList, self.__listLock)
-        self.__dbLock = dbLock
-	self.listen()
+        self.listen()
     
     def listen(self):
         while(1):
@@ -49,15 +48,16 @@ class ClientListener():
             adder = ClientAdder(newSock, self._clientList, self.__listLock, self.__dbLock)
 
 
+
+
 class ClientAddr(threading.Thread):
     
-    def __init__(self, clientSocket, clientList, clientListLock, dbLock):
+    def __init__(self, clientSocket, clientList, clientListLock):
         threading.Thread.__init__(self, name='client_addition_thread')
         
         self.__clientSocket = clientSocket
         self.__clientList = clientList
         self.__listLock = clientListLock 
-        self.__dbLock =  dbLock
         self.run()
             
     def run(self):
@@ -65,14 +65,14 @@ class ClientAddr(threading.Thread):
 	    # read history from pytable and send to new client	
 
 	    # while still reading the db 
-		    # self.dbLock.acquire()
-		    # data = read hunk from database 
-		    # self.clientSocket.send(data)
-		    # self.dbLock.release()
- 
+		    # data = read hunk from database
+            # self.clientSocket.send(data)
+		    
         self.clientListLock.acquire()  # attempt to gain access to the client list
         self.clientList.append(self.clientSocket)
         self.clientListLock.release()
+
+
 
 
 class ClientServer(threading.Thread):

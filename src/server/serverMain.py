@@ -43,8 +43,7 @@ startMSG = "00"
 # main thread
 def Main():
     
-    # a lock to control access to the db    
-    dbLock = threading.Semaphore()
+    db = DataHandler()    
 
     print "server running..."
     
@@ -54,12 +53,12 @@ def Main():
     child_pid = os.fork()
     if child_pid == 0:
         print "Child Process: PID# %s" % os.getpid()  
-        clientHandler = cl.ClientListener(dbLock)
+        clientHandler = cl.ClientListener()
     else:
         print "Parent Process: PID# %s" % os.getpid()    
     
     # creating Tyler's thread
-    sdc = SensorDataCollector(sensorList, dbLock)
+    sdc = SensorDataCollector(sensorList)
     
     # creating UDP listening socket
     listenSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
