@@ -45,7 +45,7 @@ class ClientListener():
             self.__listenSocket.listen(5) #allows for a backlog of 5 sockets
             newSock, newAdd = self.__listenSocket.accept()
             newSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            adder = ClientAdder(newSock, self._clientList, self.__listLock, self.__dbLock)
+            adder = ClientAdder(newSock, self._clientList, self.__listLock)
 
 
 
