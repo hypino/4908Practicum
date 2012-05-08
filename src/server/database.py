@@ -37,8 +37,8 @@ class DataHandler():
         table = dataFile.root.sensorData.data
         row = table.row
         
-        # instead of 10 in xrange(10), put number of sensors
-        for i in xrange(10):
+        # instead of 10 in xrange(20), put number of sensors
+        for i in xrange(20):
             row['serialNum'] = data[0]
             row['timeSec'] = data[1]
             row['timeMilli'] = data[2]
@@ -58,3 +58,40 @@ class DataHandler():
         dataFile.close()
         #release database
         self.__lock.release()
+        
+        
+    @staticmethod
+    def getRealTimeData(self):
+        # acquire database
+        self.__lock.acquire()
+        # open PyTables table
+        dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
+        # get the data table
+        table = dataFile.root.sensorData.data
+        row = table.row
+
+        # in theory, this should return the last row in that table
+        # what it does is it returns the "curent" row
+        print row.nrow()
+
+        dataFile.close()
+        # release database
+        self.__lock.release()
+        
+    
+    @staticmethod
+    def getRangeData(self, startTime, finishTime):
+        #acquire database
+        self.__lock.acquire()
+        #open PyTables table
+        dataFile = openFile('SensorDatabase', mode = "a", title = "Sensor data file")
+        #get the data table
+        table = dataFile.root.sensorData.data
+        row = table.row
+        
+        result = [i['timeSec'] for i in table.where("""(finishTime >= timeSec) & (timeSec >= startTime)""")]
+        print result
+       
+        dataFile.close()
+        #release database
+        self.__lock.release()    
