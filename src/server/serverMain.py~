@@ -31,7 +31,7 @@ import ClientListener as cl
 from SensorDataCollector import SensorDataCollector
 
 # broadcasting IP and port
-addr = ("0.0.0.0", 57002)
+addr = ("", 57002)
 # 2 bytes serial number + 2 bytes port number
 bufsize = 4
 # list of sensors registered on server

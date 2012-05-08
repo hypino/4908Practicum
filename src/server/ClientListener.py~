@@ -104,8 +104,9 @@ class ClientServer(threading.Thread):
             while len(data) < CHC.DATASIZE:
                 data.append(self.__localSocket.recv(CHC.DATASIZE))
             
-            stringData = ''.join(data)    
-            self.__listLock.acquire() # attempt to gain access to the client list
+            stringData = ''.join(data)
+            # attempt to gain access to the client list
+            self.__listLock.acquire()
             # loop through the list and send the data to clients
             self.__listLock.release() # release the list
             #empty local data list

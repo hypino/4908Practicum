@@ -36,5 +36,5 @@ DATAPORT = 51011
 DATASIZE = 70
 
 #local data folder
-LOCALDATA = "../data"
+LOCALDATA = "/usr/temp"
 
