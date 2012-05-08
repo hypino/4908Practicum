@@ -80,12 +80,10 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 
         if controlCommand == vspc.CONTROL_COMMAND_START:
             self.server.commandQueue.put([vspc.SET_IS_LOGGING, True])
-            continue
             #packedResult = '\x01'
 
         elif controlCommand == vspc.CONTROL_COMMAND_STOP:
             self.server.commandQueue.put([vspc.SET_IS_LOGGING, False])
-            continue
             #packedResult = '\x01'
 
         elif controlCommand == vspc.CONTROL_COMMAND_GIVE:
@@ -123,6 +121,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 
         # let the logic thread know that we processed a call
         self.server.commandQueue.put([vspc.ETHERNET_CONTACT])
+        return
 
         try:
             self.request.send(packedResult)
