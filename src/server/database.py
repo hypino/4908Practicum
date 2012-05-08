@@ -1,9 +1,9 @@
-import tables
+from tables import *
 import numpy
-import datetime
+from datetime import datetime
 from threading import Semaphore
 
-class Record(tables.IsDescription):
+class Record(IsDescription):
     # columns
     serialNum = Int32Col()
     timeSec = Int32Col()
@@ -22,7 +22,7 @@ class DataHandler():
     def __init__(self):
         self.__lock = Semaphore()
         dataFile = openFile('SensorDatabase', mode = "w", title = "Sensor data file")
-        dataFile.createGroup("/", 'sensorData', 'Group of data from sensors')
+        group = dataFile.createGroup("/", 'sensorData', 'Group of data from sensors')
         dataFile.createTable(group, 'data', Record, "Data since %s" % datetime.now())
         dataFile.close()
     

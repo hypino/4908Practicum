@@ -44,10 +44,12 @@ class SensorDataCollector(threading.Thread):
         while True:
             # wait for data from sensors, wlist and xlist can be empty
             active = select.select(self.__sensorList, [], [], SELECT_TIMEOUT)
+            if len(active) is 0:
+	      continue
             for sensor in active[0]:
                 getSensorData(sensor)
             #write all data to database
-            appendToDatabase(self.__sendBuffer)
+            self.appendToDatabase(self.__sendBuffer)
             #write all data to client handler
             for data in self.__sendBuffer:
                 self.__localSend.send(data)

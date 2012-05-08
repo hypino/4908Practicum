@@ -25,9 +25,10 @@ import Queue
 import threading
 import argparse
 
+from database import DataHandler
 import Sensor as s
 import ClientListener as cl
-import SensorDataCollector
+from SensorDataCollector import SensorDataCollector
 
 # broadcasting IP and port
 addr = ("0.0.0.0", 57002)

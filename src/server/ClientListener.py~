@@ -33,8 +33,8 @@ class ClientListener():
     
     def __init__(self):
         self.__listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__listenSocket.bind((CHC.HOST, CHC.LISTENPORT))
+        self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__listLock = threading.Semaphore()
         self._clientList = []
         self.__clientServer = ClientServer(self._clientList, self.__listLock)
@@ -46,6 +46,8 @@ class ClientListener():
             newSock, newAdd = self.__listenSocket.accept()
             newSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             adder = ClientAdder(newSock, self._clientList, self.__listLock, self.__dbLock)
+
+
 
 
 class ClientAddr(threading.Thread):
@@ -69,6 +71,8 @@ class ClientAddr(threading.Thread):
         self.clientListLock.acquire()  # attempt to gain access to the client list
         self.clientList.append(self.clientSocket)
         self.clientListLock.release()
+
+
 
 
 class ClientServer(threading.Thread):
