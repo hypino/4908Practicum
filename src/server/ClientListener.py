@@ -59,7 +59,7 @@ class ClientAddr(threading.Thread):
         self.__clientSocket = clientSocket
         self.__clientList = clientList
         self.__listLock = clientListLock 
-        self.run()
+        self.start()
             
     def run(self):
         
@@ -94,7 +94,7 @@ class ClientServer(threading.Thread):
                 break
             except:
                 continue
-	    self.run()
+	    self.start()
             
     def run(self):
         
