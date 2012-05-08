@@ -51,13 +51,14 @@ def Main():
     # command-line arguments handling for options goes here
     
     # forking a process that handles clients
+    """
     child_pid = os.fork()
     if child_pid == 0:
         print "Child Process: PID# %s" % os.getpid()  
         clientHandler = cl.ClientListener()
     else:
         print "Parent Process: PID# %s" % os.getpid()    
-    
+    """
     # creating Tyler's thread
     sdc = SensorDataCollector(sensorList)
     
@@ -96,16 +97,15 @@ def Main():
             # if not, add to the list    
             # create TCP Socket            
             dataSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            #connect
+            dataSock.connect((sensorIP[0], port))
             newSensor = s.Sensor(serialNum, dataSock)                 
             sensorList.append(newSensor)
             print "Sensor %d found" % serialNum        
-            
-            # Connect
-            dataSock.connect((sensorIP[0], port))
+        
             # Send START msg
             dataSock.send(startMSG)
             # close the socket
-            dataSock.close()
             
         except socket.error:
             print "Error occured"

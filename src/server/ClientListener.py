@@ -35,6 +35,7 @@ class ClientListener():
         self.__listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__listenSocket.bind((CHC.HOST, CHC.LISTENPORT))
+	self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__listLock = threading.Semaphore()
         self._clientList = []
         self.__clientServer = ClientServer(self._clientList, self.__listLock)
@@ -86,7 +87,8 @@ class ClientServer(threading.Thread):
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
         while(1):	        
-            try:                
+            try:  
+		sleep(1)
                 self.__localSocket.connect(CHC.LOCALDATA)
                 print ("local Connection")
                 break

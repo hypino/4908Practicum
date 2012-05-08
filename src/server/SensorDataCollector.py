@@ -23,6 +23,7 @@ Author: Tyler Allison
 class SensorDataCollector(threading.Thread):
     
     def __init__(self, sensorList):
+	super(SensorDataCollector, self).__init__()
         self.__disconnected = []
         self.__sendBuffer = []
         self.__sensorList = sensorList
@@ -30,26 +31,28 @@ class SensorDataCollector(threading.Thread):
         #Remove file if it exists from previous run
         try:
             os.remove(LOCALDATA)
+	    print "deleting previous local socket"
         except OSError:
+	    print "local socket didn't previously exist"
             pass
         #Create the socket at the file location
         self.__localSocket.bind(LOCALDATA)
         self.__localSocket.listen(1)
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         #Need to wait until the server connects before we can start
-        self.__localSend, self.__localAddr = self.__localSocket.accept()
-        self.run()
+        self.start()
         
     def run(self):
+	#self.__localSend, self.__localAddr = self.__localSocket.accept()
         while True:
             # wait for data from sensors, wlist and xlist can be empty
             active = select.select(self.__sensorList, [], [], SELECT_TIMEOUT)
             if len(active) is 0:
-	      continue
+	        continue
             for sensor in active[0]:
-                getSensorData(sensor)
+                self.__getSensorData(sensor)
             #write all data to database
-            self.appendToDatabase(self.__sendBuffer)
+            self.__appendToDatabase(self.__sendBuffer)
             #write all data to client handler
             for data in self.__sendBuffer:
                 self.__localSend.send(data)
@@ -61,12 +64,11 @@ class SensorDataCollector(threading.Thread):
             del self.__sendBuffer[:]
             del self.__disconnected[:]
                 
-    def getSensorData(self, sensor):
+    def __getSensorData(self, sensor):
         #debugging
         assert isinstance(sensor, Sensor.Sensor), "%s is not a socket descriptor" % sensor
         #get data from socket
-        raw = (bytearray)(sensor.getSerial())
-        raw += sensor.getSocket().recv(DATASIZE)
+        raw = sensor.getSocket().recv(DATASIZE)
         #Did the sensor connection end? 2 because length of serial number. 
         if(len(raw) == 2):
             #remove it later
@@ -74,7 +76,7 @@ class SensorDataCollector(threading.Thread):
         #Append to sending buffer
         self.__sendBuffer.append(raw)
         
-    def appendToDatabase(self, data):
+    def __appendToDatabase(self, data):
         for line in data:
             row = struct.unpack('hihdddddddd', line)
             database.DataHandler.appendRow(row)
