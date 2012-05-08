@@ -35,5 +35,6 @@ DATAPORT = 51011
 
 DATASIZE = 70
 
-LOCALDATA = "/tmp/socket"
+#local data folder
+LOCALDATA = "../data"
 

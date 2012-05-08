@@ -45,7 +45,7 @@ class ClientListener():
             self.__listenSocket.listen(5) #allows for a backlog of 5 sockets
             newSock, newAdd = self.__listenSocket.accept()
             newSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            adder = ClientAdder(newSock, self._clientList, self.__listLock, self.__dbLock)
+            adder = ClientAdder(newSock, self._clientList, self.__listLock)
 
 
 
@@ -68,9 +68,9 @@ class ClientAddr(threading.Thread):
 		    # data = read hunk from database
             # self.clientSocket.send(data)
 		    
-        self.clientListLock.acquire()  # attempt to gain access to the client list
-        self.clientList.append(self.clientSocket)
-        self.clientListLock.release()
+        self.__listLock.acquire()  # attempt to gain access to the client list
+        self.__clientList.append(self.__clientSocket)
+        self.__listLock.release()
 
 
 
@@ -96,17 +96,21 @@ class ClientServer(threading.Thread):
             
     def run(self):
         
+        data = []
+        
         while(1):
             
             # read data from self.localSocket
-            data = []
             while len(data) < CHC.DATASIZE:
                 data.append(self.__localSocket.recv(CHC.DATASIZE))
             
-            stringData = ''.join(data)    
-            self.listLock.acquire() # attempt to gain access to the client list
+            stringData = ''.join(data)
+            # attempt to gain access to the client list
+            self.__listLock.acquire()
             # loop through the list and send the data to clients
-            self.listLock.release() # release the list
+            self.__listLock.release() # release the list
+            #empty local data list
+            del data[:]
             
             
             
