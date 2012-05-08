@@ -4,7 +4,7 @@ import socket
 import os
 import struct
 
-import Sensor
+from Sensor import Sensor
 import database
 from ClientHandlerConstants import LOCALDATA, DATASIZE
 
@@ -66,18 +66,23 @@ class SensorDataCollector(threading.Thread):
                 
     def __getSensorData(self, sensor):
         #debugging
-        assert isinstance(sensor, Sensor.Sensor), "%s is not a socket descriptor" % sensor
+        assert isinstance(sensor, Sensor), "%s is not a Sensor" % sensor
         #get data from socket
-        raw = sensor.getSocket().recv(DATASIZE)
+	raw = bytearray(sensor.getSerial())
+	sock = sensor.getSocket()
+	remaining = DATASIZE
+	while remaining > 0:
+	    data = sock.recv(remaining)
+	    raw.extend(data)
+	    remaining -= len(data)
         #Did the sensor connection end? 2 because length of serial number. 
-        if(len(raw) == 2):
             #remove it later
-            self.__disconnected.append(sensor)
+            #self.__disconnected.append(sensor)
         #Append to sending buffer
         self.__sendBuffer.append(raw)
         
     def __appendToDatabase(self, data):
         for line in data:
-            row = struct.unpack('hihdddddddd', line)
+            row = struct.unpack('!hih8d', line)
             database.DataHandler.appendRow(row)
             

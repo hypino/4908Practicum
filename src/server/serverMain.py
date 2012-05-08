@@ -36,8 +36,6 @@ addr = ("0.0.0.0", 57002)
 bufsize = 4
 # list of sensors registered on server
 sensorList = []
-# start message
-startMSG = "00"
 
 
         
@@ -104,7 +102,8 @@ def Main():
             print "Sensor %d found" % serialNum        
         
             # Send START msg
-            dataSock.send(startMSG)
+            dataSock.send(CONTROL_COMMAND_START)
+            dataSock.send(CONTROL_COMMAND_GIVE)
             # close the socket
             
         except socket.error:

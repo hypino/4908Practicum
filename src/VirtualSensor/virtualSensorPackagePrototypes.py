@@ -80,11 +80,13 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 
         if controlCommand == vspc.CONTROL_COMMAND_START:
             self.server.commandQueue.put([vspc.SET_IS_LOGGING, True])
-            packedResult = '\x01'
+            continue
+            #packedResult = '\x01'
 
         elif controlCommand == vspc.CONTROL_COMMAND_STOP:
             self.server.commandQueue.put([vspc.SET_IS_LOGGING, False])
-            packedResult = '\x01'
+            continue
+            #packedResult = '\x01'
 
         elif controlCommand == vspc.CONTROL_COMMAND_GIVE:
 
