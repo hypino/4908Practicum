@@ -25,6 +25,7 @@ import Queue
 import threading
 import argparse
 
+from ClientHandlerConstants import CONTROL_COMMAND_GIVE, CONTROL_COMMAND_START, CONTROL_COMMAND_STOP
 from database import DataHandler
 import Sensor as s
 import ClientListener as cl
@@ -102,8 +103,8 @@ def Main():
             print "Sensor %d found" % serialNum        
         
             # Send START msg
-            dataSock.send(CONTROL_COMMAND_START)
-            dataSock.send(CONTROL_COMMAND_GIVE)
+            dataSock.send(bytes(CONTROL_COMMAND_START))
+            dataSock.send(bytes(CONTROL_COMMAND_GIVE))
             # close the socket
             
         except socket.error:
