@@ -26,7 +26,6 @@ class DataHandler():
         dataFile.createTable(group, 'data', Record, "Data since %s" % datetime.now())
         dataFile.close()
     
-    @staticmethod
     def appendRow(self, data):
         assert len(data) == 11, "Data is not formatted correctly for database"
         #acquire database
@@ -60,7 +59,6 @@ class DataHandler():
         self.__lock.release()
         
         
-    @staticmethod
     def getRealTimeData(self):
         # acquire database
         self.__lock.acquire()
@@ -78,8 +76,6 @@ class DataHandler():
         # release database
         self.__lock.release()
         
-    
-    @staticmethod
     def getRangeData(self, startTime, finishTime):
         #acquire database
         self.__lock.acquire()
