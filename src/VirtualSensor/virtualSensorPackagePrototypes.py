@@ -57,76 +57,79 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 
     """
     def handle(self):
-        # try/except used to deal with data not being ready yet on a non-blocking socket
-        self.data = None
-        while self.data is None:
-            try:
-                self.data = self.request.recv(1024)
-            except socket.timeout:
-                pass
-            except socket.error:
+        
+        while(1):
+            # try/except used to deal with data not being ready yet on a non-blocking socket
+            self.data = None
+            while self.data is None:
+                try:
+                    self.data = self.request.recv(1)
+                except socket.timeout:
+                    pass
+                except socket.error:
+                    return
+    
+            if len(self.data) == 0:
                 return
-
-        if len(self.data) == 0:
-            return
-
-        #packedResult = '\x00' # default return value, if result of call is False
-
-        controlByte = self.data
-
-        # split up the control byte
-        #controlCommand = controlByte & 0x03
-        controlCommand = self.data
-        #throttleValue = (controlByte & 0xFC) >> 2
-
-        if controlCommand == vspc.CONTROL_COMMAND_START:
-            self.server.commandQueue.put([vspc.SET_IS_LOGGING, True])
-
-        elif controlCommand == vspc.CONTROL_COMMAND_STOP:
-            self.server.commandQueue.put([vspc.SET_IS_LOGGING, False])
-
-        elif controlCommand == vspc.CONTROL_COMMAND_GIVE:
-
-            # first pull any queued data
-            while not self.server.dataQueue.empty():
-                item = self.server.dataQueue.get()
-                self.server.dataList.append(item)
-
-            # prepare reply data
-            if len(self.server.dataList) > 0:
-                # determine how much data to send (based on the throttle value)
-                nRows = len(self.server.dataList)
-                while throttleValue > 0:
-                    nRows = nRows >> 1
-                    throttleValue = throttleValue >> 1
-
-                structFormat = '<' + ('IHdddddddd') * nRows
-
-                # combine all the rows to be struct packed
-                allData = [item for sublist in self.server.dataList[:nRows] for item in sublist]
-
-                packedResult = struct.pack(structFormat, *allData)
-
-                # remove sent lines from the buffer
-                self.server.dataList = self.server.dataList[nRows:]
-
+    
+            packedResult = '\x00' # default return value, if result of call is False
+    
+            controlByte = self.data
+    
+            # split up the control byte
+            #controlCommand = controlByte & 0x03
+            controlCommand = self.data
+            #throttleValue = (controlByte & 0xFC) >> 2
+            
+    
+            if controlCommand == vspc.CONTROL_COMMAND_START:
+                self.server.commandQueue.put([vspc.SET_IS_LOGGING, True])
+    
+            elif controlCommand == vspc.CONTROL_COMMAND_STOP:
+                self.server.commandQueue.put([vspc.SET_IS_LOGGING, False])
+    
+            elif controlCommand == vspc.CONTROL_COMMAND_GIVE:
+    
+                # first pull any queued data
+                while not self.server.dataQueue.empty():
+                    item = self.server.dataQueue.get()
+                    self.server.dataList.append(item)
+    
+                # prepare reply data
+                if len(self.server.dataList) > 0:
+                    # determine how much data to send (based on the throttle value)
+                    nRows = len(self.server.dataList)
+                    #while throttleValue > 0:
+                        #nRows = nRows >> 1
+                        #throttleValue = throttleValue >> 1
+    
+                    structFormat = '<' + ('IHdddddddd') * nRows
+    
+                    # combine all the rows to be struct packed
+                    allData = [item for sublist in self.server.dataList[:nRows] for item in sublist]
+    
+                    packedResult = struct.pack(structFormat, *allData)
+    
+                    # remove sent lines from the buffer
+                    self.server.dataList = self.server.dataList[nRows:]
+    
+                else:
+                    # no data to return
+                    pass
             else:
-                # no data to return
+                # unknown control command
                 pass
-        else:
-            # unknown control command
-            pass
-
-
-        # let the logic thread know that we processed a call
-        self.server.commandQueue.put([vspc.ETHERNET_CONTACT])
-
-        try:
-            if controlCommand == vspc.CONTROL_COMMAND_GIVE:
-                self.request.send(packedResult)
-        except socket.error:
-            # connection reset by peer
-            pass
+    
+    
+            # let the logic thread know that we processed a call
+            self.server.commandQueue.put([vspc.ETHERNET_CONTACT])
+    
+            try:
+                if controlCommand == vspc.CONTROL_COMMAND_GIVE:
+                    self.request.send(packedResult)
+            except socket.error:
+                # connection reset by peer
+                pass
 
 
 class VirtualSensorPackageLogicPrototype(threading.Thread):
