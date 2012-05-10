@@ -6,7 +6,7 @@ import struct
 
 from Sensor import Sensor
 import database
-from ClientHandlerConstants import LOCALDATA, DATASIZE
+from ClientHandlerConstants import LOCALDATA, DATASIZE, CONTROL_COMMAND_GIVE
 
 #Timeout for select to update it's sensor list if needed
 SELECT_TIMEOUT = 0.1
@@ -31,10 +31,9 @@ class SensorDataCollector(threading.Thread):
         #Remove file if it exists from previous run
         try:
             os.remove(LOCALDATA)
-	    print "deleting previous local socket"
+	    print "Deleting previous local socket."
         except OSError:
-	    print "local socket didn't previously exist"
-            pass
+	    print "Local socket didn't previously exist, creating."
         #Create the socket at the file location
         self.__localSocket.bind(LOCALDATA)
         self.__localSocket.listen(1)
@@ -47,19 +46,23 @@ class SensorDataCollector(threading.Thread):
         while True:
             # wait for data from sensors, wlist and xlist can be empty
             active = select.select(self.__sensorList, [], [], SELECT_TIMEOUT)
-            if len(active) is 0:
+            if len(active[0]) == 0:
 	        continue
             for sensor in active[0]:
                 self.__getSensorData(sensor)
+	    #if none of the sensors had any data, continue
+	    if len(self.__sendBuffer) == 0:
+	        continue
             #write all data to database
             self.__appendToDatabase(self.__sendBuffer)
             #write all data to client handler
-            for data in self.__sendBuffer:
-                self.__localSend.send(data)
+            #for data in self.__sendBuffer:
+            #    self.__localSend.send(data)
             #remove all sensors that disconnected
             for old in self.__disconnected:
                 old.getSocket().close()
                 self.__sensorList.remove(old)
+		print "Sensor %r disconnected" % old.getSerial() 
             #clear lists
             del self.__sendBuffer[:]
             del self.__disconnected[:]
@@ -68,21 +71,32 @@ class SensorDataCollector(threading.Thread):
         #debugging
         assert isinstance(sensor, Sensor), "%s is not a Sensor" % sensor
         #get data from socket
-	raw = bytearray(sensor.getSerial())
+	raw = bytearray(struct.pack('H', sensor.getSerial()))
 	sock = sensor.getSocket()
 	remaining = DATASIZE
+        #check if there is actually data or not
+	try:
+	    check = sock.recv(1, socket.MSG_PEEK)
+        except:
+	    #connect reset by peer
+	    self.__disconnected.append(sensor)
+	    return
+	#if the sensor has no data currently
+	if check == '\x00':
+	    sock.recv(1)
+	    sock.send(bytes(CONTROL_COMMAND_GIVE))
+	    return
+	#read a whole packet
 	while remaining > 0:
 	    data = sock.recv(remaining)
 	    raw.extend(data)
 	    remaining -= len(data)
-        #Did the sensor connection end? 2 because length of serial number. 
-            #remove it later
-            #self.__disconnected.append(sensor)
         #Append to sending buffer
+	sock.send(bytes(CONTROL_COMMAND_GIVE))
         self.__sendBuffer.append(raw)
         
     def __appendToDatabase(self, data):
         for line in data:
-            row = struct.unpack('!hih8d', line)
-            database.DataHandler.appendRow(row)
+            row = struct.unpack('=HIH8d', str(line))
+            #database.DataHandler.appendRow(row)
             
