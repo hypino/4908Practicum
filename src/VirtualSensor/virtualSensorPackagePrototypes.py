@@ -70,23 +70,20 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
         if len(self.data) == 0:
             return
 
-        packedResult = '\x00' # default return value, if result of call is False
+        #packedResult = '\x00' # default return value, if result of call is False
 
-        controlByte = struct.unpack('<B', self.data[0])[0]
+        controlByte = self.data
 
         # split up the control byte
-        controlCommand = controlByte & 0x03
-        throttleValue = (controlByte & 0xFC) >> 2
+        #controlCommand = controlByte & 0x03
+        controlCommand = self.data
+        #throttleValue = (controlByte & 0xFC) >> 2
 
         if controlCommand == vspc.CONTROL_COMMAND_START:
             self.server.commandQueue.put([vspc.SET_IS_LOGGING, True])
-            #packedResult = '\x01'
-            return
 
         elif controlCommand == vspc.CONTROL_COMMAND_STOP:
             self.server.commandQueue.put([vspc.SET_IS_LOGGING, False])
-            #packedResult = '\x01'
-            return
 
         elif controlCommand == vspc.CONTROL_COMMAND_GIVE:
 
@@ -125,7 +122,8 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
         self.server.commandQueue.put([vspc.ETHERNET_CONTACT])
 
         try:
-            self.request.send(packedResult)
+            if controlCommand == vspc.CONTROL_COMMAND_GIVE:
+                self.request.send(packedResult)
         except socket.error:
             # connection reset by peer
             pass
@@ -143,7 +141,7 @@ class VirtualSensorPackageLogicPrototype(threading.Thread):
 
     '''
     def __init__(self, dataQueue, commandQueue,
-                 port, serialNumber, udpPort, logInterval=DEFAULT_LOG_INTERVAL):
+    			port, serialNumber, udpPort, logInterval=DEFAULT_LOG_INTERVAL):
         threading.Thread.__init__(self, name='vep_logic')
 
         self._dataQueue = dataQueue        # used to pass dataLines to the RPC thread
@@ -163,7 +161,7 @@ class VirtualSensorPackageLogicPrototype(threading.Thread):
         self._lastEthernetPingTime = 0
 
         self.keepRunning = True
-
+        self.registered = False
         self.start()
 
     def run(self):
@@ -174,7 +172,8 @@ class VirtualSensorPackageLogicPrototype(threading.Thread):
 
         # main logic loop
         while self.keepRunning:
-            self.updateNetwork()
+            if self.registered == False:
+                self.updateNetwork()
             self.processCommands()
             self.updateData()
 
@@ -210,6 +209,7 @@ class VirtualSensorPackageLogicPrototype(threading.Thread):
 
     def processCommands(self):
         if not self._commandQueue.empty():
+            self.registered = True
             item = self._commandQueue.get()
 
             if item[0] == vspc.SET_IS_LOGGING:
