@@ -50,11 +50,9 @@ class SensorDataCollector(threading.Thread):
 	        continue
             for sensor in active[0]:
                 self.__getSensorData(sensor)
-	    #if none of the sensors had any data, continue
-	    if len(self.__sendBuffer) == 0:
-	        continue
             #write all data to database
-            self.__appendToDatabase(self.__sendBuffer)
+	    if len(self.__sendBuffer) != 0:
+		self.__appendToDatabase(self.__sendBuffer)
             #write all data to client handler
             #for data in self.__sendBuffer:
             #    self.__localSend.send(data)
@@ -96,7 +94,5 @@ class SensorDataCollector(threading.Thread):
 	    return	
         
     def __appendToDatabase(self, data):
-        for line in data:
-            row = struct.unpack('=HIH8d', str(line))
-            self.__database.appendRow(row)
+	self.__database.appendRows(data)
             

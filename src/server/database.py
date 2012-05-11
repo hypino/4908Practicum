@@ -1,7 +1,9 @@
-from tables import *
-import numpy
+import struct
 from datetime import datetime
 from threading import Semaphore
+
+from tables import *
+import numpy
 
 class Record(IsDescription):
     # columns
@@ -21,39 +23,42 @@ class DataHandler():
     
     def __init__(self):
         self.__lock = Semaphore()
-        dataFile = openFile('SensorDatabase', mode = "w", title = "Sensor data file")
-        group = dataFile.createGroup("/", 'sensorData', 'Group of data from sensors')
-        dataFile.createTable(group, 'data', Record, "Data since %s" % datetime.now())
-        dataFile.close()
+        self.__dataFile = openFile('SensorDatabase', mode = "w", title = "Sensor data file")
+        group = self.__dataFile.createGroup("/", 'sensorData', 'Group of data from sensors')
+        self.__dataFile.createTable(group, 'data', Record, "Data since %s" % datetime.now())
+        #dataFile.close()
     
-    def appendRow(data):
-        assert len(data) == 11, "Data is not formatted correctly for database"
+    def appendRows(self, data):
         #acquire database
         self.__lock.acquire()
         #open PyTables table
-        dataFile = openFile('SensorDatabase', mode = "a", title = "Sensor data file")
+        #dataFile = openFile('SensorDatabase', mode = "a", title = "Sensor data file")
         #get the data table
         table = dataFile.root.sensorData.data
         row = table.row
         
+        numRows = len(data)
+        
         # instead of 10 in xrange(20), put number of sensors
-        row['serialNum'] = data[0]
-        row['timeSec'] = data[1]
-        row['timeMilli'] = data[2]
-        row['col1'] = data[3]
-        row['col2'] = data[4]
-        row['col3'] = data[5]
-        row['col4'] = data[6]
-        row['col5'] = data[7]
-        row['col6'] = data[8]
-        row['col7'] = data[9]
-        row['col8'] = data[10]
-        # adding this row to the table
-        row.append()
+        for i in xrange(numRows):
+            line = struct.unpack('=HIH8d', str(data[i]))
+            row['serialNum'] = line[0]
+            row['timeSec'] = line[1]
+            row['timeMilli'] = line[2]
+            row['col1'] = line[3]
+            row['col2'] = line[4]
+            row['col3'] = line[5]
+            row['col4'] = line[6]
+            row['col5'] = line[7]
+            row['col6'] = line[8]
+            row['col7'] = line[9]
+            row['col8'] = line[10]
+            # adding this row to the table
+            row.append()
             
         # this saves the table to the file    
         table.flush()
-        dataFile.close()
+        #dataFile.close()
         #release database
         self.__lock.release()
         
@@ -62,7 +67,7 @@ class DataHandler():
         # acquire database
         self.__lock.acquire()
         # open PyTables table
-        dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
+        #dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         # get the data table
         table = dataFile.root.sensorData.data
         row = table.row
@@ -71,7 +76,7 @@ class DataHandler():
         # what it does is it returns the "curent" row
         result = row.nrow()
         
-        dataFile.close()
+        #dataFile.close()
         # release database
         self.__lock.release()
         return result
@@ -80,14 +85,14 @@ class DataHandler():
         #acquire database
         self.__lock.acquire()
         #open PyTables table
-        dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
+        #dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         #get the data table
         table = dataFile.root.sensorData.data
         row = table.row
         
         result = [i['timeSec'] for i in table.where("""(finishTime >= timeSec) & (timeSec >= startTime)""")]
         
-        dataFile.close()
+        #dataFile.close()
         #release database
         self.__lock.release()
         return result

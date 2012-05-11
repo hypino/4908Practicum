@@ -59,7 +59,7 @@ def Main():
         print "Parent Process: PID# %s" % os.getpid()    
     """
     # creating Tyler's thread
-    sdc = SensorDataCollector(sensorList)
+    sdc = SensorDataCollector(sensorList, db)
     
     # creating UDP listening socket
     listenSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
