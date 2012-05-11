@@ -26,7 +26,7 @@ class DataHandler():
         dataFile.createTable(group, 'data', Record, "Data since %s" % datetime.now())
         dataFile.close()
     
-    def appendRow(self, data):
+    def appendRow(data):
         assert len(data) == 11, "Data is not formatted correctly for database"
         #acquire database
         self.__lock.acquire()

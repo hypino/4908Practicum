@@ -6,10 +6,9 @@ import struct
 
 from Sensor import Sensor
 import database
-from ClientHandlerConstants import LOCALDATA, DATASIZE, CONTROL_COMMAND_GIVE
+from ClientHandlerConstants import LOCALDATA, DATASIZE, CONTROL_COMMAND_GIVE, SELECT_TIMEOUT
 
 #Timeout for select to update it's sensor list if needed
-SELECT_TIMEOUT = 0.1
 """Will collect data from all of the connected sensors
 
 Thread that will constantly check all sensors for
@@ -98,5 +97,5 @@ class SensorDataCollector(threading.Thread):
     def __appendToDatabase(self, data):
         for line in data:
             row = struct.unpack('=HIH8d', str(line))
-            #database.DataHandler.appendRow(row)
+            database.DataHandler.appendRow(row)
             

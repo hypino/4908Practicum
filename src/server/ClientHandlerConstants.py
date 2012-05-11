@@ -17,9 +17,8 @@ ClientHandler Constants
 
 """
 
-# pipe operations
-WRITE = 0
-READ  = 1
+#select constants
+SELECT_TIMEOUT = 0.1
 
 # control commands
 CONTROL_COMMAND_START = 0
