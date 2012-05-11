@@ -76,23 +76,23 @@ class SensorDataCollector(threading.Thread):
         #check if there is actually data or not
 	try:
 	    check = sock.recv(1, socket.MSG_PEEK)
-        except:
+	    #if the sensor has no data currently
+	    if check == '\x00':
+		sock.recv(1)
+		sock.send(bytes(CONTROL_COMMAND_GIVE))
+		return
+	    #read a whole packet
+	    while remaining > 0:
+		data = sock.recv(remaining)
+		raw.extend(data)
+		remaining -= len(data)
+	    #Append to sending buffer
+	    sock.send(bytes(CONTROL_COMMAND_GIVE))
+	    self.__sendBuffer.append(raw)
+	except:
 	    #connect reset by peer
 	    self.__disconnected.append(sensor)
-	    return
-	#if the sensor has no data currently
-	if check == '\x00':
-	    sock.recv(1)
-	    sock.send(bytes(CONTROL_COMMAND_GIVE))
-	    return
-	#read a whole packet
-	while remaining > 0:
-	    data = sock.recv(remaining)
-	    raw.extend(data)
-	    remaining -= len(data)
-        #Append to sending buffer
-	sock.send(bytes(CONTROL_COMMAND_GIVE))
-        self.__sendBuffer.append(raw)
+	    return	
         
     def __appendToDatabase(self, data):
         for line in data:
