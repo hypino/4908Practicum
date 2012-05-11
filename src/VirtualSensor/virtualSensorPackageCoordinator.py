@@ -102,10 +102,10 @@ def MainLoop():
     opts = optparse.OptionParser()
 
     opts.add_option('-n', '--nSensors', action="store", type="int", dest='nSensors',
-                    help='number of virtual sensor packages to create', default=20)
+                    help='number of virtual sensor packages to create', default=100)
 
     opts.add_option('-i', '--interval', action="store", type="float", dest='interval',
-                    help='interval between logged data entries (seconds)', default=0.01)
+                    help='interval between logged data entries (seconds)', default=0.1)
 
     opts.add_option('-p', '--port', action="store", type="int", dest='port',
                     help='starting port when creating virtual sensor packages', default=56001)
