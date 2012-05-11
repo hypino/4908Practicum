@@ -5,7 +5,7 @@ import os
 import struct
 
 from Sensor import Sensor
-import database
+from database import DataHandler
 from ClientHandlerConstants import LOCALDATA, DATASIZE, CONTROL_COMMAND_GIVE, SELECT_TIMEOUT
 
 #Timeout for select to update it's sensor list if needed
@@ -21,8 +21,9 @@ Author: Tyler Allison
 """
 class SensorDataCollector(threading.Thread):
     
-    def __init__(self, sensorList):
+    def __init__(self, sensorList, dataHandler):
 	super(SensorDataCollector, self).__init__()
+	self.__database = dataHandler
         self.__disconnected = []
         self.__sendBuffer = []
         self.__sensorList = sensorList
@@ -97,5 +98,5 @@ class SensorDataCollector(threading.Thread):
     def __appendToDatabase(self, data):
         for line in data:
             row = struct.unpack('=HIH8d', str(line))
-            database.DataHandler.appendRow(row)
+            self.__database.appendRow(row)
             
