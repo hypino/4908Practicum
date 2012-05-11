@@ -5,6 +5,11 @@ from threading import Semaphore
 from tables import *
 import numpy
 
+"""Record is the layout of a row of data
+in the PyTables file. Each row will be
+constructed exactly like this.
+
+"""
 class Record(IsDescription):
     # columns
     serialNum = Int32Col()
@@ -19,7 +24,18 @@ class Record(IsDescription):
     col7 = Float64Col()
     col8 = Float64Col()
 
-class DataHandler():
+"""This object will be the central
+access point to the database for all
+threads of the program.
+
+It should be noted that each function
+of this class first acquires the semaphore,
+and lastly releases the semaphore. All
+additional methods should do the same.
+This object can be treated like a Monitor.
+
+"""
+class DataHandler(object):
     
     def __init__(self):
         self.__lock = Semaphore()

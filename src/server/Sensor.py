@@ -19,8 +19,20 @@ class Sensor(object):
     def getSerial(self):
         return self.__serialNumber
     
-    def fileno(self):
-        return self.__socket.fileno()
-    
     def getSocket(self):
         return self.__socket
+    
+    """Implemented fileno so that a sensor
+    object can be treated like a file descriptor,
+    which is essentially what it is with more
+    data.
+    
+    The "select" function call requires that
+    the list of objects that it is polling
+    has a fileno method that returns an integer
+    representing the identity of the file
+    descriptor.
+    
+    """
+    def fileno(self):
+        return self.__socket.fileno()    

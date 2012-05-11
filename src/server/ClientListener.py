@@ -29,7 +29,7 @@ This class listens on a TCP port for client connections and accepts the connecti
 an instance of ClientAdder, which updates the new client's data, adds the client to the list of connected clients
 """
 
-class ClientListener():
+class ClientListener(object):
     
     def __init__(self, dataHandler):
         self.__listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
