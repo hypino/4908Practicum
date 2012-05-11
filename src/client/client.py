@@ -1,7 +1,7 @@
 from tables import *
 import numpy
 import threading
-from ../server/database import DataHandler
+from database import DataHandler
 
 import clientConstants as CC
 
