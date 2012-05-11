@@ -22,7 +22,7 @@ import pipes
 
 
 import ClientHandlerConstants as CHC
-
+from database import DataHandler
 
 """
 This class listens on a TCP port for client connections and accepts the connection.  It then creates 
@@ -31,14 +31,15 @@ an instance of ClientAdder, which updates the new client's data, adds the client
 
 class ClientListener():
     
-    def __init__(self):
+    def __init__(self, dataHandler):
         self.__listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__listenSocket.bind((CHC.HOST, CHC.LISTENPORT))
 	self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	self.__dataHandler = dataHandler
         self.__listLock = threading.Semaphore()
         self._clientList = []
-        self.__clientServer = ClientServer(self._clientList, self.__listLock)
+        self.__clientServer = ClientServer(self._clientList, self.__listLock, self.__dataHandler)
         self.listen()
     
     def listen(self):
@@ -53,10 +54,11 @@ class ClientListener():
 
 class ClientAddr(threading.Thread):
     
-    def __init__(self, clientSocket, clientList, clientListLock):
+    def __init__(self, clientSocket, clientList, clientListLock, dataHandler):
         threading.Thread.__init__(self, name='client_addition_thread')
         
         self.__clientSocket = clientSocket
+	self.__dataHandler = dataHandler
         self.__clientList = clientList
         self.__listLock = clientListLock 
         self.start()
@@ -83,7 +85,7 @@ class ClientServer(threading.Thread):
             
         self.__clientList = clientList
         self.__listLock = listLock
-        self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+	self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
         while(1):	        
