@@ -37,3 +37,7 @@ DATASIZE = 70
 #local data folder
 LOCALDATA = "/usr/temp"
 
+# trackers for start and last time stamps
+FIRSTRECORDTIME = 0
+LASTRECORDTIME = 0
+

@@ -37,20 +37,19 @@ class DataHandler():
         row = table.row
         
         # instead of 10 in xrange(20), put number of sensors
-        for i in xrange(20):
-            row['serialNum'] = data[0]
-            row['timeSec'] = data[1]
-            row['timeMilli'] = data[2]
-            row['col1'] = data[3]
-            row['col2'] = data[4]
-            row['col3'] = data[5]
-            row['col4'] = data[6]
-            row['col5'] = data[7]
-            row['col6'] = data[8]
-            row['col7'] = data[9]
-            row['col8'] = data[10]
-            # adding this row to the table
-            row.append()
+        row['serialNum'] = data[0]
+        row['timeSec'] = data[1]
+        row['timeMilli'] = data[2]
+        row['col1'] = data[3]
+        row['col2'] = data[4]
+        row['col3'] = data[5]
+        row['col4'] = data[6]
+        row['col5'] = data[7]
+        row['col6'] = data[8]
+        row['col7'] = data[9]
+        row['col8'] = data[10]
+        # adding this row to the table
+        row.append()
             
         # this saves the table to the file    
         table.flush()
@@ -70,24 +69,25 @@ class DataHandler():
 
         # in theory, this should return the last row in that table
         # what it does is it returns the "curent" row
-        print row.nrow()
-
+        result = row.nrow()
+        
         dataFile.close()
         # release database
         self.__lock.release()
+        return result
         
     def getRangeData(self, startTime, finishTime):
         #acquire database
         self.__lock.acquire()
         #open PyTables table
-        dataFile = openFile('SensorDatabase', mode = "a", title = "Sensor data file")
+        dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         #get the data table
         table = dataFile.root.sensorData.data
         row = table.row
         
         result = [i['timeSec'] for i in table.where("""(finishTime >= timeSec) & (timeSec >= startTime)""")]
-        print result
-       
+        
         dataFile.close()
         #release database
-        self.__lock.release()    
+        self.__lock.release()
+        return result
