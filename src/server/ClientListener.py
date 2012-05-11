@@ -64,16 +64,11 @@ class ClientAddr(threading.Thread):
         self.start()
             
     def run(self):
-        
-	    # read history from pytable and send to new client
-	
-	starttime = CHC.FIRSTRECORDTIME
-	endtime = CHC.FIRSTRECORDTIME + 1
-	while endtime <= CHC.LASTRECORDTIME:
-	    data = self.__dataHandler.getRangeData(starttime, endtime)
-	    starttime += 1
-	    endtime += 1
-            self.clientSocket.send(data)
+        # need a db lock here!!!!!!!!!!!
+	# send database file to new client
+	dbFile = open('SensorDatabase', 'rb')
+	for line in f:
+	    self.clientSocket.send(line)
 		    
         self.__listLock.acquire()  # attempt to gain access to the client list
         self.__clientList.append(self.__clientSocket)
