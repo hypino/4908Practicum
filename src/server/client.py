@@ -16,16 +16,16 @@ class Client():
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__socket.connect((host, CC.HOSTPORT))
         #db = DataHandler()
-        self.__ui = UICollector()
-        self.__ui.start()
-        getData()
+        #self.__ui = UICollector()
+        #self.__ui.start()
+        self.getRealTimeData()
         
     
     
     def getHistoryData(self):
     
         remaining = CC.DATASIZE    
-	    
+        data = bytearray("")
         while remaining > 0:
 	        recv = self.__socket.recv(remaining)
 	        data.extend(recv)
@@ -41,6 +41,7 @@ class Client():
         while (1):
             remaining = CC.DATASIZE    
 	        
+            data = bytearray("")
             # Read realtime data from the socket
             while remaining > 0:
 	            recv = self.__socket.recv(remaining)
