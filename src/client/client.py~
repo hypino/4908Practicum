@@ -1,7 +1,6 @@
-from tables import *
-import numpy
 import threading
-from ../server/database import DataHandler
+from database import DataHandler
+import struct
 
 import clientConstants as CC
 
@@ -15,19 +14,33 @@ class Client():
         self.__socket.bind((CC.HOST, CC.LISTENPORT))
         self.__socket.connect((HOST, HOSTPORT))
         db = DataHandler()
-        self.__dataCollector = DataCollector(self.__socket)
+        getData()
         self.__ui = UICollector()
+        self.__ui.start()
 
-class DataCollector(threading.Thread):
     
-    def __init__(self, socket):
+    
+    def getHistoryData(self):
+    
+        remaining = CC.DATASIZE    
+	    
+        while remaining > 0:
+	        recv = self.__socket.recv(remaining)
+	        data.extend(recv)
+	        remaining -= len(recv)
+	        
+    
+    def getRealTimeData(self):
         
-        self.__socket = socket
-        self.run()
+        remaining = CC.DATASIZE    
+	    
+        while remaining > 0:
+	        recv = self.__socket.recv(remaining)
+	        data.extend(recv)
+	        remaining -= len(recv)
+        
 
-    def run(self):
-        
-        
+   
         
 
-class UICollector(threading.Thread):    
+#class UICollector(threading.Thread):
