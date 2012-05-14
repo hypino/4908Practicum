@@ -6,7 +6,7 @@ import struct
 
 from Sensor import Sensor
 from database import DataHandler
-from ClientHandlerConstants import LOCALDATA, DATASIZE, CONTROL_COMMAND_GIVE, SELECT_TIMEOUT
+from ClientHandlerConstants import LOCALDATA, DATASIZE, SELECT_TIMEOUT
 
 #Timeout for select to update it's sensor list if needed
 """Will collect data from all of the connected sensors
@@ -75,7 +75,6 @@ class SensorDataCollector(threading.Thread):
 	    #if the sensor has no data currently, return
 	    if check == '\x00':
 		sock.recv(1)
-		sock.send(bytes(CONTROL_COMMAND_GIVE))
 		return
 	    #read a whole packet (DATASIZE bytes)
 	    while remaining > 0:
@@ -83,7 +82,6 @@ class SensorDataCollector(threading.Thread):
 		raw.extend(data)
 		remaining -= len(data)
 	    #Append to sending buffer
-	    sock.send(bytes(CONTROL_COMMAND_GIVE))
 	    self.__sendBuffer.append(raw)
 	except:
 	    #connect reset by peer

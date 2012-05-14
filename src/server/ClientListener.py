@@ -66,7 +66,7 @@ class ClientAdder(threading.Thread):
         # need a db lock here!!!!!!!!!!!
 	# send database file to new client
 	data = self.__dataHandler.sendDB()
-	while len(data) > CHC.HISTORYSIZE:
+	while len(data) > 0:
 	    self.__clientSocket.send(data)
 	    data = self.__dataHandler.sendDB()
 	if data > 0: 

@@ -49,10 +49,10 @@ class DataHandler(object):
         self.__lock = Semaphore()
 	if not path.exists('SensorDatabase'):
             self.__dataFile = openFile('SensorDatabase', mode = 'w', title = 'Sensor data file')
+	    group = self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')
+	    self.__dataFile.createTable(group, 'data', Record, 'Data since %s' % datetime.now())	    
 	else:
 	    self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
-        group = self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')
-        self.__dataFile.createTable(group, 'data', Record, 'Data since %s' % datetime.now())
         self.__firstRead = True
         
         #dataFile.close()
