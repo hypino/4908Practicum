@@ -59,8 +59,10 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         
         while(1):
-            # try/except used to deal with data not being ready yet on a non-blocking socket
             self.data = None
+            self.prevMSG = None
+            
+            # try/except used to deal with data not being ready yet on a non-blocking socket
             while self.data is None:
                 try:
                     self.data = self.request.recv(1)
@@ -69,7 +71,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                 except socket.error:
                     return
     
-            if len(self.data) == 0:
+            if (len(self.data) == 0 & self.prevMSG != vspc.CONTROL_COMMAND_GOING):
                 return
     
             packedResult = '\x00' # default return value, if result of call is False
@@ -88,7 +90,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             elif controlCommand == vspc.CONTROL_COMMAND_STOP:
                 self.server.commandQueue.put([vspc.SET_IS_LOGGING, False])
     
-            elif controlCommand == vspc.CONTROL_COMMAND_GIVE:
+            elif (controlCommand == vspc.CONTROL_COMMAND_GIVE | self.prevMSG == vspc.CONTROL_COMMAND_GOING):
+    
+                self.prevMSG = vspc.CONTROL_COMMAND_GOING
     
                 # first pull any queued data
                 while not self.server.dataQueue.empty():
