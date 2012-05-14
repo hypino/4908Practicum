@@ -1,5 +1,5 @@
 import threading
-#from database import DataHandler
+from database import DataHandler
 import struct
 import socket
 
@@ -15,29 +15,17 @@ class Client():
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__socket.connect((host, CC.HOSTPORT))
-        #db = DataHandler()
         #self.__ui = UICollector()
         #self.__ui.start()
-        self.getRealTimeData()
+        self.__historyCollector = HistoryCollector(self)
         
-    
-    
-    def getHistoryData(self):
-    
-        remaining = CC.DATASIZE    
-        data = bytearray("")
-        while remaining > 0:
-	        recv = self.__socket.recv(remaining)
-	        data.extend(recv)
-	        remaining -= len(recv)
-	        
+        
     """
     Read real-time sensor data from client and save it to the DB.  Display it if 
     real-time mode is enabled
     """
     def getRealTimeData(self):
         
-        #  FIX THIS TO CATCH SIGINT!!!!!!
         while (1):
             remaining = CC.DATASIZE    
 	        
@@ -48,10 +36,36 @@ class Client():
 	            data.extend(recv)
 	            remaining -= len(recv)
             
-            # display data
-            if self.__realTime:
-                print data
+            if CC.REALTIMEMODE: 
+                self.displayData(data)
         
+    def displayData(self, data):
+        
+        # This will be replaced by a better display method this week.
+                
+        # display data
+        if self.__realTime:
+            print data
 
+class HistoryCollector(threading.Thread):
+
+    def __init__(self, client):
+        super(HistoryCollector, self).__init__()
+        self.__client = client
+        self.start()
    
+    def run(self):
+    
+        dataFile = open("SensorDatabase", 'wb')        
+        remaining = 0        
+        while remaining > 0:
+	        recv = self.__socket.recv(remaining)
+	        dataFile.write(recv)
+	        remaining -= len(recv)
+
+        dataFile.close()
+        db = DataHandler()
+        self.__client.getRealTimeData()
+        CC.DATABASEREADY = True
+
  #class UICollector(threading.Thread):
