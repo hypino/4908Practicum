@@ -75,12 +75,12 @@ class SensorDataCollector(threading.Thread):
         #check if there is actually data or not
 	try:
 	    check = sock.recv(1, socket.MSG_PEEK)
-	    #if the sensor has no data currently
+	    #if the sensor has no data currently, return
 	    if check == '\x00':
 		sock.recv(1)
 		sock.send(bytes(CONTROL_COMMAND_GIVE))
 		return
-	    #read a whole packet
+	    #read a whole packet (DATASIZE bytes)
 	    while remaining > 0:
 		data = sock.recv(remaining)
 		raw.extend(data)

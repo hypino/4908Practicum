@@ -33,6 +33,7 @@ LISTENPORT = 4908
 DATAPORT = 51011
 
 DATASIZE = 70
+HISTORYSIZE = 1000
 
 #local data folder
 LOCALDATA = "/usr/temp"
@@ -40,4 +41,7 @@ LOCALDATA = "/usr/temp"
 # trackers for start and last time stamps
 FIRSTRECORDTIME = 0
 LASTRECORDTIME = 0
+
+
+
 

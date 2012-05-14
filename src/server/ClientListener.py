@@ -18,7 +18,6 @@ ClientHandler Prototypes
 
 import threading
 import socket
-import pipes
 
 
 import ClientHandlerConstants as CHC
@@ -35,11 +34,11 @@ class ClientListener(object):
         self.__listenSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__listenSocket.bind((CHC.HOST, CHC.LISTENPORT))
-	self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	self.__dataHandler = dataHandler
+        self.__listenSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.__dataHandler = dataHandler
         self.__listLock = threading.Semaphore()
         self._clientList = []
-        self.__clientServer = ClientServer(self._clientList, self.__listLock, self.__dataHandler)
+        #self.__clientServer = ClientServer(self._clientList, self.__listLock, self.__dataHandler)
         self.listen()
     
     def listen(self):
@@ -47,12 +46,12 @@ class ClientListener(object):
             self.__listenSocket.listen(5) #allows for a backlog of 5 sockets
             newSock, newAdd = self.__listenSocket.accept()
             newSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            adder = ClientAdder(newSock, self._clientList, self.__listLock)
+            adder = ClientAdder(newSock, self._clientList, self.__listLock, self.__dataHandler)
 
 
 
 
-class ClientAddr(threading.Thread):
+class ClientAdder(threading.Thread):
     
     def __init__(self, clientSocket, clientList, clientListLock, dataHandler):
         threading.Thread.__init__(self, name='client_addition_thread')
@@ -66,9 +65,13 @@ class ClientAddr(threading.Thread):
     def run(self):
         # need a db lock here!!!!!!!!!!!
 	# send database file to new client
-	dbFile = open('SensorDatabase', 'rb')
-	for line in f:
-	    self.clientSocket.send(line)
+	data = self.__dataHandler.sendDB()
+	while len(data) > CHC.HISTORYSIZE:
+	    self.__clientSocket.send(data)
+	    data = self.__dataHandler.sendDB()
+	if data > 0: 
+	    # send the last line
+	    self.__clientSocket.send(data)
 		    
         self.__listLock.acquire()  # attempt to gain access to the client list
         self.__clientList.append(self.__clientSocket)
@@ -84,7 +87,7 @@ class ClientServer(threading.Thread):
             
         self.__clientList = clientList
         self.__listLock = listLock
-	self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
         while(1):	        
