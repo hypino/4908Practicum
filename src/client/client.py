@@ -1,7 +1,6 @@
-from tables import *
-import numpy
 import threading
-from database import DataHandler
+from ../server/database import DataHandler
+import struct
 
 import clientConstants as CC
 
@@ -17,14 +16,31 @@ class Client():
         db = DataHandler()
         getData()
         self.__ui = UICollector()
-        
+        self.__ui.start()
 
-    def getData(self):
+    
+    
+    def getHistoryData(self):
+    
+        remaining = CC.DATASIZE    
+	    
+        while remaining > 0:
+	        recv = self.__socket.recv(remaining)
+	        data.extend(recv)
+	        remaining -= len(recv)
+	        
+    
+    def getRealTimeData(self):
         
-        data = self.__socket.recv(CC.PACKETSIZE)
+        remaining = CC.DATASIZE    
+	    
+        while remaining > 0:
+	        recv = self.__socket.recv(remaining)
+	        data.extend(recv)
+	        remaining -= len(recv)
         
 
    
         
 
-class UICollector(threading.Thread):    
+#class UICollector(threading.Thread):

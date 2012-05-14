@@ -66,13 +66,10 @@ class SensorDataCollector(threading.Thread):
             del self.__disconnected[:]
                 
     def __getSensorData(self, sensor):
-        #debugging
         assert isinstance(sensor, Sensor), "%s is not a Sensor" % sensor
-        #get data from socket
 	raw = bytearray(struct.pack('H', sensor.getSerial()))
 	sock = sensor.getSocket()
 	remaining = DATASIZE
-        #check if there is actually data or not
 	try:
 	    check = sock.recv(1, socket.MSG_PEEK)
 	    #if the sensor has no data currently, return
