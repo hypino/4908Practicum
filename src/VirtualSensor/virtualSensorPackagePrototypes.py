@@ -17,6 +17,7 @@ __revision__ = "$Rev: 4189 $"
 # $Id: virtualSensorPackagePrototypes.py 4189 2012-04-26 22:47:48Z dave $
 
 import SocketServer
+SocketServer.TCPServer.allow_reuse_address = True
 import threading
 import time
 import socket
@@ -27,7 +28,6 @@ import virtualSensorPackageConstants as vspc
 
 PING_SEND_DELAY = 10 # contact time before a node starts sending pings again (seconds)
 DEFAULT_LOG_INTERVAL = 0.05 # seconds between logged data points
-
 
 class VirtualSensorPackageTCPServerPrototype(threading.Thread):
     '''

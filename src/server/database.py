@@ -142,16 +142,19 @@ class DataHandler(object):
 	data = bytearray("")
         while count < READCOUNT:
 	    line = self.__dataFile.readline()
+	    if line == "":
+		break
 	    data.extend(line)
 	    count += 1
         
         # save where we are in the file
         self.__filePosition = self.__dataFile.tell()
         self.__dataFile.close()
+        
         # re open the db in append mode
         self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
         self.__lock.release()
         if self.__firstRead:
             self.__firstRead = False
-	    
+	    	    
 	return(data)
