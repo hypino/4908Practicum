@@ -17,7 +17,6 @@ __revision__ = "$Rev: 4189 $"
 # $Id: virtualSensorPackagePrototypes.py 4189 2012-04-26 22:47:48Z dave $
 
 import SocketServer
-SocketServer.TCPServer.allow_reuse_address = True
 import threading
 import time
 import socket
@@ -65,13 +64,13 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             self.data = None
                         
             # try/except used to deal with data not being ready yet on a non-blocking socket
-            
-            try:
-                self.data = self.request.recv(1)
-            except socket.timeout:
-                pass
-            except socket.error:
-                return
+            while self.data is None:
+                try:
+                    self.data = self.request.recv(1)
+                except socket.timeout:
+                    pass
+                except socket.error:
+                    return
     
             if (len(self.data) == 0 and self.prevMSG != vspc.CONTROL_COMMAND_GOING):
                 return
@@ -84,6 +83,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             #controlCommand = controlByte & 0x03
             controlCommand = self.data
             #throttleValue = (controlByte & 0xFC) >> 2
+            
     
             if controlCommand == vspc.CONTROL_COMMAND_START:
                 self.server.commandQueue.put([vspc.SET_IS_LOGGING, True])
