@@ -29,7 +29,6 @@ import virtualSensorPackageConstants as vspc
 PING_SEND_DELAY = 10 # contact time before a node starts sending pings again (seconds)
 DEFAULT_LOG_INTERVAL = 0.05 # seconds between logged data points
 
-
 class VirtualSensorPackageTCPServerPrototype(threading.Thread):
     '''
     Prototype for VSP TCPServers.

@@ -63,8 +63,7 @@ class ClientAdder(threading.Thread):
         self.start()
             
     def run(self):
-        # need a db lock here!!!!!!!!!!!
-	# send database file to new client
+        # send database file to new client
 	data = self.__dataHandler.sendDB()
 	while len(data) > 0:
 	    self.__clientSocket.send(data)
