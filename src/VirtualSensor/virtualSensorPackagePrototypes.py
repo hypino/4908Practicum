@@ -60,6 +60,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         
         self.prevMSG = None
+        self.request.setblocking(0)
 
         while(1):
             self.data = None
@@ -71,8 +72,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             except socket.timeout:
                 pass
             except socket.error:
-                return
-    
+                #return
+                self.data = '\x05'
+                
             if (len(self.data) == 0 and self.prevMSG != vspc.CONTROL_COMMAND_GOING):
                 return
     
@@ -116,9 +118,6 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     
                     packedResult = struct.pack(structFormat, *allData)
     
-                    # remove sent lines from the buffer
-                    self.server.dataList = self.server.dataList[nRows:]
-    
                 else:
                     # no data to return
                     pass
@@ -131,7 +130,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             self.server.commandQueue.put([vspc.ETHERNET_CONTACT])
     
             try:
-                if controlCommand == vspc.CONTROL_COMMAND_GIVE:
+                if (((controlCommand == vspc.CONTROL_COMMAND_GIVE) or (self.prevMSG == vspc.CONTROL_COMMAND_GOING)) and len(self.server.dataList) > 0):
+                    # remove sent lines from the buffer
+                    self.server.dataList = self.server.dataList[nRows:]                                        
                     self.request.send(packedResult)
             except socket.error:
                 # connection reset by peer
