@@ -2,7 +2,8 @@ import threading
 from database import DataHandler
 import struct
 import socket
-
+import signal
+from os import kill
 
 import clientConstants as CC
 
@@ -26,7 +27,6 @@ class Client():
         
         #self.__ui = UICollector()
         #self.__ui.start()
-        self.getHistory()
         
         
     """
@@ -36,15 +36,16 @@ class Client():
     def getRealTimeData(self):
         
         while (1):
+            
             remaining = CC.DATASIZE    
-	        
-            data = bytearray("")
+	    data = bytearray("")
             # Read realtime data from the socket
             while remaining > 0:
-	            recv = self.__socket.recv(remaining)
-	            data.extend(recv)
-	            remaining -= len(recv)
-            
+		recv = self.__socket.recv(remaining)
+		data.extend(recv)
+		remaining -= len(recv)
+            # write packet to db 
+            self.__db.appendRows([str(data)])
             if self.__realTime: 
                 self.displayData(data)
         
@@ -74,5 +75,9 @@ class Client():
         self.getRealTimeData()
         
 
+    def shutdown(self):
+	#self.__ui.shutdown()
+	pid = getpid()
+	os.kill(pid, signal.SIGTERM)
 
  #class UICollector(threading.Thread):
