@@ -64,6 +64,7 @@ class Client():
             try:	        
                 recv = self.__socket.recv(4096)
                 dataFile.write(recv)
+                remaining -= len(recv)
             except socket.timeout:
                 break
                 
