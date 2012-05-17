@@ -42,7 +42,7 @@ class SensorDataCollector(threading.Thread):
         self.start()
         
     def run(self):
-	#self.__localSend, self.__localAddr = self.__localSocket.accept()
+	self.__localSend, self.__localAddr = self.__localSocket.accept()
         while True:
             # wait for data from sensors, wlist and xlist can be empty
             active = select.select(self.__sensorList, [], [], SELECT_TIMEOUT)
@@ -54,8 +54,8 @@ class SensorDataCollector(threading.Thread):
 	    if len(self.__sendBuffer) != 0:
 		self.__appendToDatabase(self.__sendBuffer)
             #write all data to client handler
-            #for data in self.__sendBuffer:
-            #    self.__localSend.send(data)
+            for data in self.__sendBuffer:
+                self.__localSend.send(data)
             #remove all sensors that disconnected
             for old in self.__disconnected:
                 old.getSocket().close()

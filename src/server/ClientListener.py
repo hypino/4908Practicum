@@ -38,10 +38,12 @@ class ClientListener(object):
         self.__dataHandler = dataHandler
         self.__listLock = threading.Semaphore()
         self._clientList = []
-        #self.__clientServer = ClientServer(self._clientList, self.__listLock, self.__dataHandler)
+        self.__clientServer = ClientServer(self._clientList, self.__listLock)
         self.listen()
+	
     
     def listen(self):
+	print "Listening:"
         while(1):
             self.__listenSocket.listen(5) #allows for a backlog of 5 sockets
             newSock, newAdd = self.__listenSocket.accept()
@@ -63,12 +65,13 @@ class ClientAdder(threading.Thread):
         self.start()
             
     def run(self):
+	print "Adding Client:"
         # send database file to new client
 	data = self.__dataHandler.sendDB()
 	while len(data) > 0:
 	    self.__clientSocket.send(data)
 	    data = self.__dataHandler.sendDB()
-	if data > 0: 
+	if data == "": 
 	    # send the last line
 	    self.__clientSocket.send(data)
 		    
@@ -91,30 +94,45 @@ class ClientServer(threading.Thread):
         
         while(1):	        
             try:  
-		sleep(1)
                 self.__localSocket.connect(CHC.LOCALDATA)
                 print ("local Connection")
                 break
             except:
                 continue
-	    self.start()
+	self.start()
             
     def run(self):
         
+	print "Client/Server Running:"
         data = []
+	disconnected = []
         
         while(1):
             
             # read data from self.localSocket
-            while len(data) < CHC.DATASIZE:
-                data.append(self.__localSocket.recv(CHC.DATASIZE))
-            
+	    remaining = CHC.DATASIZE + 2
+            while remaining > 0:
+		recv = self.__localSocket.recv(remaining)
+		data.append(recv)
+		remaining -= len(recv)
+		
             stringData = ''.join(data)
             # attempt to gain access to the client list
             self.__listLock.acquire()
             # loop through the list and send the data to clients
+	    for client in self.__clientList:
+		try:
+		    client.send(stringData)
+		except:
+		    #connection reset by peer
+		    disconnected.append(client)
             self.__listLock.release() # release the list
             #empty local data list
+	    for close in disconnected:
+		close.close()
+		self.__clientList.remove(close)
+		print "Client disconnected"
+	    del disconnected[:]
             del data[:]
             
             

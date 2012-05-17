@@ -63,7 +63,7 @@ class DataHandler(object):
         #open PyTables table
         #dataFile = openFile('SensorDatabase', mode = "a", title = "Sensor data file")
         #get the data table
-        table = dataFile.root.sensorData.data
+        table = self.__dataFile.root.sensorData.data
         row = table.row
         
         numRows = len(data)
@@ -116,7 +116,7 @@ class DataHandler(object):
         #open PyTables table
         #dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         #get the data table
-        table = dataFile.root.sensorData.data
+        table = self.__dataFile.root.sensorData.data
         row = table.row
         
         result = [i['timeSec'] for i in table.where('''(finishTime >= timeSec) & (timeSec >= startTime)''')]

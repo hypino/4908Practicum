@@ -24,6 +24,7 @@ import time
 import Queue
 import threading
 import argparse
+import signal
 
 from ClientHandlerConstants import CONTROL_COMMAND_GIVE, CONTROL_COMMAND_START, CONTROL_COMMAND_STOP
 from database import DataHandler
@@ -38,11 +39,14 @@ bufsize = 4
 # list of sensors registered on server
 sensorList = []
 
-
+def signalHandler(signal, frame):
+    print "Server Terminating..."
+    exit(0)
         
 # main thread
 def Main():
     
+    signal.signal(signal.SIGINT, signalHandler)
     db = DataHandler()    
 
     print "server running..."
@@ -50,14 +54,14 @@ def Main():
     # command-line arguments handling for options goes here
     
     # forking a process that handles clients
-    """
+    
     child_pid = os.fork()
-    if child_pid == 0:
+    if child_pid == 0:  #  CHANGE THIS BACK FOR THE LOVE OF GOD!!!!!!!!
         print "Child Process: PID# %s" % os.getpid()  
-        clientHandler = cl.ClientListener()
+        clientHandler = cl.ClientListener(db)
     else:
         print "Parent Process: PID# %s" % os.getpid()    
-    """
+    
     # creating Tyler's thread
     sdc = SensorDataCollector(sensorList, db)
     
