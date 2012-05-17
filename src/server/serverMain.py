@@ -26,7 +26,7 @@ import threading
 import argparse
 import signal
 
-from ClientHandlerConstants import CONTROL_COMMAND_GIVE, CONTROL_COMMAND_START, CONTROL_COMMAND_STOP
+from ClientHandlerConstants import *
 from database import DataHandler
 import Sensor as s
 import ClientListener as cl
@@ -104,6 +104,8 @@ def Main():
             dataSock.connect((sensorIP[0], port))
             newSensor = s.Sensor(serialNum, dataSock)                 
             sensorList.append(newSensor)
+            if len(sensorList) > 20:
+                HISTORYSIZE = len(sensorList) * 100
             print "Sensor %d found" % serialNum        
         
             # Send START msg
