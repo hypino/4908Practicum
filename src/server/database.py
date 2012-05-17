@@ -98,7 +98,7 @@ class DataHandler(object):
         # open PyTables table
         #dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         # get the data table
-        table = dataFile.root.sensorData.data
+        table = self.__dataFile.root.sensorData.data
         row = table.row
 
         # in theory, this should return the last row in that table
