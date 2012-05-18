@@ -114,7 +114,7 @@ def Main():
             # close the socket
             
         except socket.error:
-            print "Error occured"
+            print "Error occurred"
             listenSock.close()
             break
         

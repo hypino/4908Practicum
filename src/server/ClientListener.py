@@ -39,15 +39,15 @@ class ClientListener(object):
         self._clientList = []
         self.__clientServer = ClientServer(self._clientList, self.__listLock, self.__dataHandler)
         self.listen()
-        
+    """   
     def __del__(self):
         
         self.__listLock.acquire()
         for client in self._clientList:
-            client.shutdown(SHUT_RDWR)
-        self.__listenSocket.shutdown(SHUT_RDWR)
+            client.shutdown(socket.SHUT_RDWR)
+        self.__listenSocket.shutdown(socket.SHUT_RDWR)
         exit(0)
-
+    """
     def listen(self):
         print "Listening:"
         while(1):
@@ -140,14 +140,13 @@ class ClientServer(threading.Thread, DataHandler):
                     socket.send(rangeData)
                 except:
                     #connection reset by peer
-                    disconnected.append(client)                
+                    disconnected.append(client)
                 
-                del timeRange[:]
-                
-                #empty local data list
+                #remove all disconnected clients
                 for close in disconnected:
                     close.close()
                     self.__clientList.remove(close)
                     print "Client disconnected"
                 del disconnected[:]
                 del data[:]
+                del timeRange[:]
