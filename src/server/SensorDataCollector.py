@@ -44,7 +44,6 @@ class SensorDataCollector(threading.Thread):
     def run(self):
         self.__localSend, self.__localAddr = self.__localSocket.accept()
         while True:
-            # wait for data from sensors, wlist and xlist can be empty
             active = select.select(self.__sensorList, [], [], SELECT_TIMEOUT)
             if len(active[0]) == 0:
                 continue
@@ -71,11 +70,6 @@ class SensorDataCollector(threading.Thread):
         sock = sensor.getSocket()
         remaining = DATASIZE
         try:
-            check = sock.recv(1, socket.MSG_PEEK)
-            #if the sensor has no data currently, return
-            if check == '\x00':
-                sock.recv(1)
-                return
             #read a whole packet (DATASIZE bytes)
             while remaining > 0:
                 data = sock.recv(remaining)
