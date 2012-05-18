@@ -41,7 +41,7 @@ sensorList = []
 
 def signalHandler(signal, frame):
     print "Server Terminating..."
-    exit(0)
+    os.kill(int(os.getpid()), 9)    
         
 # main thread
 def Main():

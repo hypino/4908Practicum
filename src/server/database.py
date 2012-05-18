@@ -1,5 +1,4 @@
 from os import path
-
 import struct
 from datetime import datetime
 from threading import Semaphore
@@ -12,9 +11,6 @@ in the PyTables file. Each row will be
 constructed exactly like this.
 
 """
-
-
-
 class Record(IsDescription):
     # columns
     serialNum = Int32Col()
@@ -44,31 +40,25 @@ This object can be treated like a Monitor.
 READCOUNT = 1000
 
 class DataHandler(object):
-    
+
     def __init__(self):
         self.__lock = Semaphore()
-	if not path.exists('SensorDatabase'):
+        if not path.exists('SensorDatabase'):
             self.__dataFile = openFile('SensorDatabase', mode = 'w', title = 'Sensor data file')
-	    group = self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')
-	    self.__dataFile.createTable(group, 'data', Record, 'Data since %s' % datetime.now())	    
-	else:
-	    self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
+            group = self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')
+            self.__dataFile.createTable(group, 'data', Record, 'Data since %s' % datetime.now())	    
+        else:
+            self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
         self.__firstRead = True
-        
-        #dataFile.close()
-    
+
     def appendRows(self, data):
         #acquire database
         self.__lock.acquire()
-        #open PyTables table
-        #dataFile = openFile('SensorDatabase', mode = "a", title = "Sensor data file")
         #get the data table
         table = self.__dataFile.root.sensorData.data
         row = table.row
-        
+
         numRows = len(data)
-        
-        # instead of 10 in xrange(20), put number of sensors
         for i in xrange(numRows):
             line = struct.unpack('=HIH8d', str(data[i]))
             row['serialNum'] = line[0]
@@ -84,77 +74,34 @@ class DataHandler(object):
             row['col8'] = line[10]
             # adding this row to the table
             row.append()
-            
+
         # this saves the table to the file    
         table.flush()
-        #dataFile.close()
         #release database
         self.__lock.release()
-        
-        
+
+
     def getRealTimeData(self):
         # acquire database
         self.__lock.acquire()
-        # open PyTables table
-        #dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         # get the data table
         table = self.__dataFile.root.sensorData.data
         row = table.row
-
         # in theory, this should return the last row in that table
         # what it does is it returns the "curent" row
         result = row.nrow()
-        
-        #dataFile.close()
         # release database
         self.__lock.release()
         return result
-        
+
     def getRangeData(self, startTime, finishTime):
         #acquire database
         self.__lock.acquire()
-        #open PyTables table
-        #dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         #get the data table
         table = self.__dataFile.root.sensorData.data
-        row = table.row
-        
         result = [i['timeSec'] for i in table.where('''(finishTime >= timeSec) & (timeSec >= startTime)''')]
-        
-        #dataFile.close()
         #release database
         self.__lock.release()
         return result
+
     
-    def sendDB(self):
-	# acquir database
-	self.__lock.acquire()
-        # close the db
-        self.__dataFile.close()
-        # open the file in binary mode
-        self.__dataFile = open('SensorDatabase', mode = 'rb')
-        if not self.__firstRead:
-            # read from where we left off
-            self.__dataFile.seek(self.__filePosition)
-        
-        # read a bunch of data    
-        count = 0
-	data = bytearray("")
-        while count < READCOUNT:
-	    line = self.__dataFile.readline()
-	    if line == "":
-		break
-	    data.extend(line)
-	    count += 1
-        
-        # save where we are in the file
-        self.__filePosition = self.__dataFile.tell()
-        self.__dataFile.close()
-        
-        # re open the db in append mode
-        self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
-        self.__lock.release()
-        if self.__firstRead:
-            self.__firstRead = False
-	    	    
-	return(data)
