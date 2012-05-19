@@ -20,10 +20,10 @@ database.
 Author: Tyler Allison
 """
 class SensorDataCollector(threading.Thread):
-    
+
     def __init__(self, sensorList, dataHandler):
-	super(SensorDataCollector, self).__init__()
-	self.__database = dataHandler
+        super(SensorDataCollector, self).__init__()
+        self.__database = dataHandler
         self.__disconnected = []
         self.__sendBuffer = []
         self.__sensorList = sensorList
@@ -31,63 +31,56 @@ class SensorDataCollector(threading.Thread):
         #Remove file if it exists from previous run
         try:
             os.remove(LOCALDATA)
-	    print "Deleting previous local socket."
+            print "Deleting previous local socket."
         except OSError:
-	    print "Local socket didn't previously exist, creating."
+            print "Local socket didn't previously exist, creating."
         #Create the socket at the file location
         self.__localSocket.bind(LOCALDATA)
         self.__localSocket.listen(1)
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         #Need to wait until the server connects before we can start
         self.start()
-        
+
     def run(self):
-	#self.__localSend, self.__localAddr = self.__localSocket.accept()
+        self.__localSend, self.__localAddr = self.__localSocket.accept()
         while True:
-            # wait for data from sensors, wlist and xlist can be empty
             active = select.select(self.__sensorList, [], [], SELECT_TIMEOUT)
             if len(active[0]) == 0:
-	        continue
+                continue
             for sensor in active[0]:
                 self.__getSensorData(sensor)
             #write all data to database
-	    if len(self.__sendBuffer) != 0:
-		self.__appendToDatabase(self.__sendBuffer)
+            if len(self.__sendBuffer) != 0:
+                self.__appendToDatabase(self.__sendBuffer)
             #write all data to client handler
-            #for data in self.__sendBuffer:
-            #    self.__localSend.send(data)
+            for data in self.__sendBuffer:
+                self.__localSend.send(data)
             #remove all sensors that disconnected
             for old in self.__disconnected:
                 old.getSocket().close()
                 self.__sensorList.remove(old)
-		print "Sensor %r disconnected" % old.getSerial() 
+                print "Sensor %r disconnected" % old.getSerial() 
             #clear lists
             del self.__sendBuffer[:]
             del self.__disconnected[:]
-                
+
     def __getSensorData(self, sensor):
         assert isinstance(sensor, Sensor), "%s is not a Sensor" % sensor
-	raw = bytearray(struct.pack('H', sensor.getSerial()))
-	sock = sensor.getSocket()
-	remaining = DATASIZE
-	try:
-	    check = sock.recv(1, socket.MSG_PEEK)
-	    #if the sensor has no data currently, return
-	    if check == '\x00':
-		sock.recv(1)
-		return
-	    #read a whole packet (DATASIZE bytes)
-	    while remaining > 0:
-		data = sock.recv(remaining)
-		raw.extend(data)
-		remaining -= len(data)
-	    #Append to sending buffer
-	    self.__sendBuffer.append(raw)
-	except:
-	    #connect reset by peer
-	    self.__disconnected.append(sensor)
-	    return	
-        
+        raw = bytearray(struct.pack('H', sensor.getSerial()))
+        sock = sensor.getSocket()
+        remaining = DATASIZE
+        try:
+            #read a whole packet (DATASIZE bytes)
+            while remaining > 0:
+                data = sock.recv(remaining)
+                raw.extend(data)
+                remaining -= len(data)
+            #Append to sending buffer
+            self.__sendBuffer.append(raw)
+        except:
+            #connect reset by peer
+            self.__disconnected.append(sensor)
+            return	
+
     def __appendToDatabase(self, data):
-	self.__database.appendRows(data)
-            
+        self.__database.appendRows(data)

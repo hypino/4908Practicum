@@ -24,8 +24,9 @@ import time
 import Queue
 import threading
 import argparse
+import signal
 
-from ClientHandlerConstants import CONTROL_COMMAND_GIVE, CONTROL_COMMAND_START, CONTROL_COMMAND_STOP
+from ClientHandlerConstants import *
 from database import DataHandler
 import Sensor as s
 import ClientListener as cl
@@ -38,11 +39,14 @@ bufsize = 4
 # list of sensors registered on server
 sensorList = []
 
-
+def signalHandler(signal, frame):
+    print "Server Terminating Safely..."
+    os.kill(int(os.getpid()), 9)    
         
 # main thread
 def Main():
     
+    signal.signal(signal.SIGINT, signalHandler)
     db = DataHandler()    
 
     print "server running..."
@@ -50,14 +54,14 @@ def Main():
     # command-line arguments handling for options goes here
     
     # forking a process that handles clients
-    """
+    
     child_pid = os.fork()
-    if child_pid == 0:
-        print "Child Process: PID# %s" % os.getpid()  
-        clientHandler = cl.ClientListener()
+    if child_pid == 0:  #  CHANGE THIS BACK FOR THE LOVE OF GOD!!!!!!!!
+        print "Client Listener process created, PID# %s" % os.getpid()  
+        clientHandler = cl.ClientListener(db)
     else:
-        print "Parent Process: PID# %s" % os.getpid()    
-    """
+        print "Main process PID# %s" % os.getpid()    
+    
     # creating Tyler's thread
     sdc = SensorDataCollector(sensorList, db)
     
@@ -100,6 +104,8 @@ def Main():
             dataSock.connect((sensorIP[0], port))
             newSensor = s.Sensor(serialNum, dataSock)                 
             sensorList.append(newSensor)
+            if len(sensorList) > 20:
+                HISTORYSIZE = len(sensorList) * 100
             print "Sensor %d found" % serialNum        
         
             # Send START msg
@@ -108,7 +114,7 @@ def Main():
             # close the socket
             
         except socket.error:
-            print "Error occured"
+            print "Error occurred"
             listenSock.close()
             break
         

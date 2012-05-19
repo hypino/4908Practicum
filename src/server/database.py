@@ -1,5 +1,4 @@
 from os import path
-
 import struct
 from datetime import datetime
 from threading import Semaphore
@@ -12,9 +11,6 @@ in the PyTables file. Each row will be
 constructed exactly like this.
 
 """
-
-
-
 class Record(IsDescription):
     # columns
     serialNum = Int32Col()
@@ -45,31 +41,25 @@ READCOUNT = 1000
 displayedData = 100
 
 class DataHandler(object):
-    
+
     def __init__(self):
         self.__lock = Semaphore()
-	if not path.exists('SensorDatabase'):
+        if not path.exists('SensorDatabase'):
             self.__dataFile = openFile('SensorDatabase', mode = 'w', title = 'Sensor data file')
-	    group = self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')
-	    self.__dataFile.createTable(group, 'data', Record, 'Data since %s' % datetime.now())	    
-	else:
-	    self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
+            group = self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')
+            self.__dataFile.createTable(group, 'data', Record, 'Data since %s' % datetime.now())	    
+        else:
+            self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
         self.__firstRead = True
-        
-        #dataFile.close()
-    
+
     def appendRows(self, data):
         #acquire database
         self.__lock.acquire()
-        #open PyTables table
-        #dataFile = openFile('SensorDatabase', mode = "a", title = "Sensor data file")
         #get the data table
-        table = dataFile.root.sensorData.data
+        table = self.__dataFile.root.sensorData.data
         row = table.row
-        
+
         numRows = len(data)
-        
-        # instead of 10 in xrange(20), put number of sensors
         for i in xrange(numRows):
             line = struct.unpack('=HIH8d', str(data[i]))
             row['serialNum'] = line[0]
@@ -85,38 +75,36 @@ class DataHandler(object):
             row['col8'] = line[10]
             # adding this row to the table
             row.append()
-            
+
         # this saves the table to the file    
         table.flush()
-        #dataFile.close()
         #release database
         self.__lock.release()
-        
-        
+
+
     def getRealTimeData(self):
         # acquire database
         self.__lock.acquire()
-        # open PyTables table
-        #dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         # get the data table
-        table = dataFile.root.sensorData.data
+        table = self.__dataFile.root.sensorData.data
         row = table.row
-
         # in theory, this should return the last row in that table
         # what it does is it returns the "curent" row
         result = row.nrow()
-        
-        #dataFile.close()
         # release database
         self.__lock.release()
         return result
+<<<<<<< HEAD
         
     def getRangeData(self, startTime, finishTime, serial=None):
+=======
+
+    def getRangeData(self, startTime, finishTime):
+>>>>>>> 1eb1cbfe5e9204487de5094e6692f31cdd9dfe2a
         #acquire database
         self.__lock.acquire()
-        #open PyTables table
-        #dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         #get the data table
+<<<<<<< HEAD
         table = dataFile.root.sensorData.data
         
 		if serial == None:
@@ -167,3 +155,4 @@ class DataHandler(object):
             self.__firstRead = False
 	    	    
 	return(data)
+
