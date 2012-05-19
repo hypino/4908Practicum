@@ -10,6 +10,7 @@ class Client():
     
     def __init__(self, host=CC.LOCALHOST):
         
+        self.__file = open("datafile", 'w')
         self.__realTime = True        
         self.__host = host        
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,16 +55,14 @@ class Client():
 				data.extend(recv)
 				remaining -= len(recv)
 					
-			if self.__realTime: 
-				self.displayData(data)
+			self.displayData(data)
         
     def displayData(self, data):
-        
-        # This will be replaced by a better display method this week.
-                
-        # display data
-        if self.__realTime:
-            print data
+        # unpack the data: Serial No, Seconds, MilliSeconds, 8 * Data
+        line = struct.unpack('=HIH8d', str(data))
+        string = [str(line[i]) for i in xrange(len(line))]
+        self.__file.write(' '.join(string))
+        self.__file.write('\n')
 
     
     
@@ -80,18 +79,27 @@ class UICollector(threading.Thread):
         while(1):
             print "Enter r for range data or t for real-time data:"
             
-            selection = raw_input()
+            try:
+				selection = raw_input()
+            except KeyboardInterrupt:
+				continue
             
             if selection == 'r':
                 self.__client.setRealtime(False)
                 print "Enter Start of Range:"
-                rangeStart = raw_input()
-                start = atoi(rangeStart)    
+                try:
+					rangeStart = raw_input()
+					start = atoi(rangeStart)    
+                except KeyboardInterrupt:
+					continue
                 
                 print "Enter End of Range:"
-                rangeEnd = raw_input()
-                end = atoi(rangeEnd)    
-                
+                try:
+					rangeEnd = raw_input()
+					end = atoi(rangeEnd)    
+                except KeyboardInterrupt:
+					continue
+					
                 socket = self.__client.getSocket()
                 data = struct.pack("II", start, end)
                 socket.send(data)
