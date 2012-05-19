@@ -42,6 +42,7 @@ This object can be treated like a Monitor.
 """
 
 READCOUNT = 1000
+displayedData = 100
 
 class DataHandler(object):
     
@@ -110,21 +111,29 @@ class DataHandler(object):
         self.__lock.release()
         return result
         
-    def getRangeData(self, startTime, finishTime):
+    def getRangeData(self, startTime, finishTime, serial=None):
         #acquire database
         self.__lock.acquire()
         #open PyTables table
         #dataFile = openFile('SensorDatabase', mode = "r", title = "Sensor data file")
         #get the data table
         table = dataFile.root.sensorData.data
-        row = table.row
         
-        result = [i['timeSec'] for i in table.where('''(finishTime >= timeSec) & (timeSec >= startTime)''')]
-        
+		if serial == None:
+            result = [i['timeSec'] for i in table.where('''(finishTime >= timeSec) & (timeSec >= startTime)''')]
+		else:
+            result = [i['timeSec'] for i in table.where('''(finishTime >= timeSec) & (timeSec >= startTime) & (serialNum == serial)''')]
+
         #dataFile.close()
         #release database
         self.__lock.release()
-        return result
+
+		rangeData = finishTime - startTime
+		if rangeData > displayedData:
+			stepVal = rangeData / displayedData
+		else:
+			stepVal = 1
+        return table.readSorted(timeSec, False, None, startTime, finishTime, stepVal)
     
     def sendDB(self):
 	# acquir database
