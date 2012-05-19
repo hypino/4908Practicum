@@ -17,12 +17,13 @@ ClientHandler Constants
 
 """
 
-HOST = ''
 LOCALHOST = '127.0.0.1'
 HOSTPORT = 4908
 
 PACKETSIZE = 72
 HEADERSIZE = 2
-DATASIZE = 70
+DATASIZE = 72
+
+
 
 
