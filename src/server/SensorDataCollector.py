@@ -59,7 +59,7 @@ class SensorDataCollector(threading.Thread):
             for old in self.__disconnected:
                 old.getSocket().close()
                 self.__sensorList.remove(old)
-                print "Sensor %r disconnected" % old.getSerial() 
+                print "Sensor %r disconnected" % old.getSerial()
             #clear lists
             del self.__sendBuffer[:]
             del self.__disconnected[:]
@@ -73,6 +73,8 @@ class SensorDataCollector(threading.Thread):
             #read a whole packet (DATASIZE bytes)
             while remaining > 0:
                 data = sock.recv(remaining)
+                if data == '':
+                    raise Exception
                 raw.extend(data)
                 remaining -= len(data)
             #Append to sending buffer

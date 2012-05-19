@@ -49,19 +49,18 @@ def Main():
     signal.signal(signal.SIGINT, signalHandler)
     db = DataHandler()    
 
-    print "server running..."
+    print "Server starting up..."
     
+    firstSensorConnect = True
     # command-line arguments handling for options goes here
     
     # forking a process that handles clients
-    
     child_pid = os.fork()
     if child_pid == 0:  #  CHANGE THIS BACK FOR THE LOVE OF GOD!!!!!!!!
         print "Client Listener process created, PID# %s" % os.getpid()  
         clientHandler = cl.ClientListener(db)
     else:
         print "Main process PID# %s" % os.getpid()    
-    
     # creating Tyler's thread
     sdc = SensorDataCollector(sensorList, db)
     
