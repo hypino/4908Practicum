@@ -94,17 +94,12 @@ class DataHandler(object):
         # release database
         self.__lock.release()
         return result
-<<<<<<< HEAD
-        
+      
     def getRangeData(self, startTime, finishTime, serial=None):
-=======
-
-    def getRangeData(self, startTime, finishTime):
->>>>>>> 1eb1cbfe5e9204487de5094e6692f31cdd9dfe2a
         #acquire database
         self.__lock.acquire()
         #get the data table
-<<<<<<< HEAD
+
         table = dataFile.root.sensorData.data
         
 		if serial == None:
