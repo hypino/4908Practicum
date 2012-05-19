@@ -20,14 +20,23 @@ __revision__ = "$Rev: 4190 $"
 import time
 import Queue
 import threading
-
+import signal
 import optparse
+import os
+import sys
 
 from virtualSensorPackageStaticValue import VSPStaticValuesTCPServer, VSPStaticValuesLogic
 from virtualSensorPackageSignalGenerator import VSPSignalGeneratorTCPServer, VSPSignalGeneratorLogic
 
 import virtualSensorPackageConstants as vspc
 
+def signalHandler(signal, frame):
+    try:
+        print "\n"
+        os.kill(os.getpid(), 9)
+    except:
+        print "\n -----virtualSensor termination failed-----"
+        exit(1)
 
 class VirtualSensorPackageCoordinator(threading.Thread):
     '''
@@ -60,7 +69,7 @@ class VirtualSensorPackageCoordinator(threading.Thread):
             time.sleep(1)
 
     def shutdown(self):
-        self.keepRunning = False
+        self.keepRunnig = False
 
     def createVSP(self, vspType, logInterval):
 
@@ -98,6 +107,7 @@ def MainLoop():
     VSPs as per the command-line inputs.
 
     '''
+    signal.signal(signal.SIGINT, signalHandler)
 
     opts = optparse.OptionParser()
 
