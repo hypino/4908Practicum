@@ -40,7 +40,7 @@ bufsize = 4
 sensorList = []
 
 def signalHandler(signal, frame):
-    print "Server Terminating..."
+    print "Server Terminating Safely..."
     os.kill(int(os.getpid()), 9)    
         
 # main thread
@@ -57,10 +57,10 @@ def Main():
     
     child_pid = os.fork()
     if child_pid == 0:  #  CHANGE THIS BACK FOR THE LOVE OF GOD!!!!!!!!
-        print "Child Process: PID# %s" % os.getpid()  
+        print "Client Listener process created, PID# %s" % os.getpid()  
         clientHandler = cl.ClientListener(db)
     else:
-        print "Parent Process: PID# %s" % os.getpid()    
+        print "Main process PID# %s" % os.getpid()    
     
     # creating Tyler's thread
     sdc = SensorDataCollector(sensorList, db)

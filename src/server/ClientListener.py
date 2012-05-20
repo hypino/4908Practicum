@@ -18,6 +18,7 @@ ClientHandler Prototypes
 import threading
 import socket
 import struct
+import select
 
 import ClientHandlerConstants as CHC
 from database import DataHandler
@@ -49,30 +50,31 @@ class ClientListener(object):
         exit(0)
     """
     def listen(self):
-        print "Listening:"
+        self.__listenSocket.listen(5) #allows for a backlog of 5 sockets
+        print "Listening for clients..."
         while(1):
-            self.__listenSocket.listen(5) #allows for a backlog of 5 sockets
             newSocket, newAdd = self.__listenSocket.accept()
             newSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.__listLock.acquire()  # attempt to gain access to the client list
             self._clientList.append(newSocket)
-            self.__listLock.release()            
+            self.__listLock.release()
+            print "Client has connected."
 
-class ClientServer(threading.Thread, DataHandler):
+class ClientServer(threading.Thread):
 
-    def __init__(self, clientList, listLock):
+    def __init__(self, clientList, listLock, dataHandler):
         threading.Thread.__init__(self, name='client_addition_thread')
 
         self.__clientList = clientList
         self.__listLock = listLock
         self.__localSocket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.__localSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.__dataHandler = DataHandler
+        self.__dataHandler = dataHandler
         
         while(1):	        
             try:  
                 self.__localSocket.connect(CHC.LOCALDATA)
-                print ("local Connection")
+                print ("Local Connection established")
                 self.__listLock.acquire()
                 self.__clientList.insert(0, self.__localSocket)
                 self.__listLock.release()
@@ -84,12 +86,12 @@ class ClientServer(threading.Thread, DataHandler):
     def run(self):
 
         print "Client/Server Running:"
-        data = []
         disconnected = []
         
         
         while True:
             
+            data = bytearray()
             self.__listLock.acquire()
 
             # wait for data from SensorDataCollector, or range requests from clients
@@ -99,24 +101,22 @@ class ClientServer(threading.Thread, DataHandler):
             if len(active[0]) == 0:
                 continue
             
-            for socket in active:
+            for socket in active[0]:
                 # if the local socket has data send it to the clients
                 if socket is self.__localSocket:
                     # read data from self.localSocket
                     remaining = CHC.DATASIZE + 2
                     while remaining > 0:
                         recv = socket.recv(remaining)
-                        data.append(recv)
+                        data.extend(recv)
                         remaining -= len(recv)
-        
-                    stringData = ''.join(data)
-                    
+                        
                     # attempt to gain access to the client list
                     self.__listLock.acquire()
                     # loop through the list and send the data to clients
                     for client in self.__clientList[1:]:
                         try:
-                            client.send(stringData)
+                            client.send(data)
                         except:
                             #connection reset by peer
                             disconnected.append(client)
@@ -126,17 +126,17 @@ class ClientServer(threading.Thread, DataHandler):
                 # otherwise, read range requests from clients
                 timeRange = []
                 remaining = CHC.HISTORYSIZE
-                while remaining > 0:
-                    recv = socket.recv(remaining)
-                    timeRange.append(recv)
-                    remaining -= len(recv)
-                    
-                rangeStart, rangeEnd = struct.unpack("II", timeRange)
-                # get range data from db
-                rangeData = self.__dataHandler.getRangeData(rangeStart, rangeEnd)
-                
-                #send range data to client
                 try:
+                    while remaining > 0:
+                        recv = socket.recv(remaining)
+                        timeRange.append(recv)
+                        remaining -= len(recv)
+                        
+                    rangeStart, rangeEnd = struct.unpack("II", timeRange)
+                    # get range data from db
+                    rangeData = self.__dataHandler.getRangeData(rangeStart, rangeEnd)
+                    
+                    #send range data to client
                     socket.send(rangeData)
                 except:
                     #connection reset by peer
