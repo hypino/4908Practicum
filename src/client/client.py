@@ -10,12 +10,13 @@ class Client():
     
     def __init__(self, host=CC.LOCALHOST):
         
-        self.__file = open("datafile", 'w')
+        self.__realTimeFile = open("realTimeFile", 'w')
+        self.__historyFile = open("historyFile", 'w')
         self.__realTime = True        
         self.__host = host        
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
+        self.__firstRecordTime = 0
         # connect to server        
         print "Connecting to server"
         while(1):        
@@ -28,7 +29,10 @@ class Client():
         
         self.__ui = UICollector(self)
         self.getData()
-        
+    
+    def getFirstRecordTime(self):
+        return self.__firstRecordTime
+    
     def getSocket(self):
         return self.__socket
         
@@ -37,6 +41,16 @@ class Client():
         
     def setRealtime(self, setting):
         self.__realTime = setting
+        
+    def closeHistoryFile(self):
+        self.__historyFile.close()
+        
+    def closeRealtimeFile(self):
+        self.__realTimeFile.close()
+        
+    def closeDataFiles(self):
+        self.closeHistoryFile()
+        self.closeRealtimeFile()
         
     """
     Read real-time sensor data from client and display it if 
@@ -61,8 +75,14 @@ class Client():
         # unpack the data: Serial No, Seconds, MilliSeconds, 8 * Data
         line = struct.unpack('=HIH8d', str(data))
         string = [str(line[i]) for i in xrange(len(line))]
-        self.__file.write(' '.join(string))
-        self.__file.write('\n')
+        if self.__realTime:
+            self.__realTimeFile.write(' '.join(string))
+            self.__realTimeFile.write('\n')
+        
+        else:
+            self.__historyFile.write(' '.join(string))
+            self.__historyFile.write('\n')
+            
 
     
     
@@ -73,11 +93,12 @@ class UICollector(threading.Thread):
         threading.Thread.__init__(self, name='UI ineraction thread')
         
         self.__client = client
+        self.__socket = self.__client.getSocket()
         self.start()
         
     def run(self):
         while(1):
-            print "Enter r for range data or t for real-time data:"
+            print "Enter r for range data or t for real-time data.  s to stop:"
             
             try:
 				selection = raw_input()
@@ -85,7 +106,13 @@ class UICollector(threading.Thread):
 				continue
             
             if selection == 'r':
+                
                 self.__client.setRealtime(False)
+                try:
+                    self.__historyFile = open("historyFile", 'w')
+                except:
+                    pass
+                
                 print "Enter Start of Range:"
                 try:
 					rangeStart = raw_input()
@@ -100,13 +127,26 @@ class UICollector(threading.Thread):
                 except KeyboardInterrupt:
 					continue
 					
-                socket = self.__client.getSocket()
-                data = struct.pack("II", start, end)
-                socket.send(data)
+                data = struct.pack("cII", 'r', start, end)
+                self.__socket.send(data) 
                 continue
                 
             elif selection == 't':
                 self.__client.setRealtime(True)
+                try:
+                    self.__realTimeFile = open("realTimeFile", 'w')
+                except:
+                    pass
+                
+                data = struct.pack("=cII", 't' , 0, 0)
+                self.__socket.send(data)
+                continue
+                
+            elif selection == 's':
+                self.__client.setRealtime(False)
+                self.__client.closeDataFiles
+                data = struct.pack("=cII", 's' , 0, 0)
+                self.__socket.send(data)
                 continue
                 
             else:

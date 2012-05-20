@@ -9,7 +9,7 @@ client = Client(host)
 
 def signalHandler(signal, frame):        
         print "Client terminating safely..."
-        os.kill(int(os.getpid()), 9)
+        exit(0)
 
 def Main():
 	
