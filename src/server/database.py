@@ -45,7 +45,7 @@ class DataHandler(object):
     def __init__(self):
         self.__lock = Semaphore()
         if not path.exists('SensorDatabase'):
-            self.__dataFile = openFile('SensorDatabase', mode = 'w', title = 'Sensor data file')
+            self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
             group = self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')
             self.__dataFile.createTable(group, 'data', Record, 'Data since %s' % datetime.now())	    
         else:
@@ -85,24 +85,32 @@ class DataHandler(object):
         #acquire database
         self.__lock.acquire()
         #get the data table
-
-        table = dataFile.root.sensorData.data
-
-        if serial == None:
-            result = [i['timeSec'] for i in table.where('''(finishTime >= timeSec) & (timeSec >= startTime)''')]
-        else:
-            result = [i['timeSec'] for i in table.where('''(finishTime >= timeSec) & (timeSec >= startTime) & (serialNum == serial)''')]
-
-        #dataFile.close()
-        #release database
-        self.__lock.release()
-
+        table = self.__dataFile.root.sensorData.data
+        dataList = []
+        
         rangeData = finishTime - startTime
         if rangeData > displayedData:
             stepVal = rangeData / displayedData
         else:
             stepVal = 1
-        return table.readSorted(timeSec, False, None, startTime, finishTime, stepVal)
+            
+        cond = '(timeSec >= startTime) & (timeSec <= finishTime)'
+        condvars = {'startTime' : startTime, 'finishTime' : finishTime}
+           #1. result = [[i['timeSec'], i['serialNum']] for i in table.where(cond)]       
+        result = [row.fetch_all_fields() for row in table.where(cond, condvars, step = stepVal)]
+        self.__lock.release()
+        
+           #3. result = [row['timeSec'] for row in table.iterrows(step=50000) if row['timeSec'] >= startTime and row['timeSec'] <= finishTime]
+           #4. for i in table.where(cond):
+               #dataList.append(i['timeSec'])
+        #result = table.readSorted(sortby='timeSec', step=stepVal)
+
+        #for i in range(len(result)):
+        #    if result[i][8] 
+        #sd = sortData()
+        #final = sd.quicksort(result)
+        
+        return result
 
     def sendDB(self):
         # acquir database
@@ -136,3 +144,34 @@ class DataHandler(object):
             self.__firstRead = False
 
         return(data)
+
+
+class sortData(object):
+    
+    def __init__(self):
+        self.result = []
+    
+    def merge(self, left, right):
+        i ,j = 0, 0
+        while i < len(left) and j < len(right):
+            if left[i][8] <= right[j][8]:
+                self.result.append(left[i])
+                i += 1
+            else:
+                self.result.append(right[j])
+                j += 1
+        self.result += left[i:]
+        self.result += right[j:]
+        return self.result        
+                
+    def mergesort(self, list):
+        if len(list) < 2:
+            return list
+        middle = len(list) / 2
+        left = self.mergesort(list[:middle])
+        right = self.mergesort(list[middle:])
+        return self.merge(left, right)    
+    
+    def quicksort(self, list):
+        return [] if list==[]  else self.quicksort([x for x in list[1:] if x[8] < list[0][8]]) + [list[0]] + self.quicksort([x for x in list[1:] if x[8] >= list[0][8]])
+    
