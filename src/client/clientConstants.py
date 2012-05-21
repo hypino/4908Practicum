@@ -17,7 +17,6 @@ ClientHandler Constants
 
 """
 
-LOCALHOST = '127.0.0.1'
 HOSTPORT = 4908
 
 PACKETSIZE = 72

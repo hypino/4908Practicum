@@ -15,18 +15,12 @@ class Client():
         self.__historyFile = open("historyFile", 'w')
         self.__realTime = True
         self.__history = False
-<<<<<<< HEAD
-        self.__host = host        
-        self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.__socket.settimeout(1)
-=======
+
         self.event = threading.Event()        
         self.__host = host        
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__socket.settimeout(.1)
->>>>>>> f9280355d23f34c37c10ad7c60178e4f2a71f6a9
         self.__firstRecordTime = 0
         self.event = threading.Event()
         # connect to server        
