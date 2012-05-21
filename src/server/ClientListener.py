@@ -117,6 +117,7 @@ class ClientServer(threading.Thread):
                             #connection reset by peer
                             disconnected.append(client)
                             continue
+                        
                     self.__listLock.release() # release the list
                     continue
                 
@@ -138,9 +139,10 @@ class ClientServer(threading.Thread):
                         socket.send(rangeData)
                     elif header == 't':
                         realTimeClients.append(socket)
+                    elif header == 's':
+                        realTimeClients.remove(socket)
                     else:
                         raise Exception, "Header is not defined"
-                        
                 except:
                     disconnected.append(socket)
                     continue

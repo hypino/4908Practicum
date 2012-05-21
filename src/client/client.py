@@ -15,10 +15,18 @@ class Client():
         self.__historyFile = open("historyFile", 'w')
         self.__realTime = True
         self.__history = False
+<<<<<<< HEAD
         self.__host = host        
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__socket.settimeout(1)
+=======
+        self.event = threading.Event()        
+        self.__host = host        
+        self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.__socket.settimeout(.1)
+>>>>>>> f9280355d23f34c37c10ad7c60178e4f2a71f6a9
         self.__firstRecordTime = 0
         self.event = threading.Event()
         # connect to server        
@@ -37,8 +45,8 @@ class Client():
     def getSocket(self):
         return self.__socket
         
-    def getRealtime(self):
-        return self.__realTime
+    def setHistory(self, setting):
+        self.__history = setting
         
     def setRealtime(self, setting):
         self.__realTime = setting
@@ -69,6 +77,7 @@ class Client():
             # Read realtime data from the socket
             
             while remaining > 0:
+
                 try:
                     recv = self.__socket.recv(remaining)
                     data.extend(recv)
@@ -78,26 +87,27 @@ class Client():
                     self.event.clear()
                     continue
                 
+
             self.displayData(data)
         
     def displayData(self, data):
         # unpack the data: Serial No, Seconds, MilliSeconds, 8 * Data
         line = struct.unpack('=HIH8d', str(data))
         string = [str(line[i]) for i in xrange(len(line))]
+        
         if self.__realTime:
             self.__realTimeFile.write(' '.join(string))
             self.__realTimeFile.write('\n')
         
         elif self.__history:
+
             self.__historyFile.write(' '.join(string))
             self.__historyFile.write('\n')
             
         else:
             return
             
-
-    
-    
+            
 class UICollector(threading.Thread):
     
     def __init__(self, client):
@@ -122,14 +132,21 @@ class UICollector(threading.Thread):
                 data = struct.pack("=cII", 's' , 0, 0)
                 self.__socket.send(data)
                 
+
                 self.__client.event.wait()
                 self.__client.setRealtime(False)
                 self.__client.setHistory(True)
+
                 try:
                     self.__historyFile = open("historyFile", 'w')
                 except:
                     pass
                 
+
+                self.__client.event.wait()
+                
+                self.__client.setHistory(True)
+
                 
                 print "Enter Start of Range:"
                 try:
@@ -154,6 +171,9 @@ class UICollector(threading.Thread):
                 continue
                 
             elif selection == 't':
+
+                self.__client.setRealtime(True)
+
                 try:
                     self.__realTimeFile = open("realTimeFile", 'w')
                 except:

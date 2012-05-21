@@ -81,46 +81,32 @@ class DataHandler(object):
         #release database
         self.__lock.release()
 
-
-    def getRealTimeData(self):
-        # acquire database
-        self.__lock.acquire()
-        # get the data table
-        table = self.__dataFile.root.sensorData.data
-        row = table.row
-        # in theory, this should return the last row in that table
-        # what it does is it returns the "curent" row
-        result = row.nrow()
-        # release database
-        self.__lock.release()
-        return result
-      
     def getRangeData(self, startTime, finishTime, serial=None):
         #acquire database
         self.__lock.acquire()
         #get the data table
 
         table = dataFile.root.sensorData.data
-        
-		if serial == None:
+
+        if serial == None:
             result = [i['timeSec'] for i in table.where('''(finishTime >= timeSec) & (timeSec >= startTime)''')]
-		else:
+        else:
             result = [i['timeSec'] for i in table.where('''(finishTime >= timeSec) & (timeSec >= startTime) & (serialNum == serial)''')]
 
         #dataFile.close()
         #release database
         self.__lock.release()
 
-		rangeData = finishTime - startTime
-		if rangeData > displayedData:
-			stepVal = rangeData / displayedData
-		else:
-			stepVal = 1
+        rangeData = finishTime - startTime
+        if rangeData > displayedData:
+            stepVal = rangeData / displayedData
+        else:
+            stepVal = 1
         return table.readSorted(timeSec, False, None, startTime, finishTime, stepVal)
-    
+
     def sendDB(self):
-	# acquir database
-	self.__lock.acquire()
+        # acquir database
+        self.__lock.acquire()
         # close the db
         self.__dataFile.close()
         # open the file in binary mode
@@ -128,26 +114,25 @@ class DataHandler(object):
         if not self.__firstRead:
             # read from where we left off
             self.__dataFile.seek(self.__filePosition)
-        
+
         # read a bunch of data    
         count = 0
-	data = bytearray("")
+        data = bytearray("")
         while count < READCOUNT:
-	    line = self.__dataFile.readline()
-	    if line == "":
-		break
-	    data.extend(line)
-	    count += 1
-        
+            line = self.__dataFile.readline()
+            if line == "":
+                break
+            data.extend(line)
+            count += 1
+
         # save where we are in the file
         self.__filePosition = self.__dataFile.tell()
         self.__dataFile.close()
-        
+
         # re open the db in append mode
         self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
         self.__lock.release()
         if self.__firstRead:
             self.__firstRead = False
-	    	    
-	return(data)
 
+        return(data)
