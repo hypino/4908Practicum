@@ -62,24 +62,24 @@ class DataHandler(object):
             if name in node:
                 newTable = False
         if newTable:
-             self.__dataFile.createTable(useGroup, name, Record, 'Data since %s' % datetime.now())
-        print self.__dataFile
+            self.__dataFile.createTable(useGroup, name, Record, 'Data since %s' % datetime.now())
         self.__lock.release()
 
     def appendRows(self, data):
         #acquire database
         self.__lock.acquire()
-        group = self.__dataFile.root.sensorData
         #get the data table
-        nodes = group._v_children
+        nodes = self.__dataFile.listNodes('/')
 
         numRows = len(data)
         for i in xrange(numRows):
             line = struct.unpack('=HIH8d', str(data[i]))
-            for sensor in nodes:
-                if str(line[0]) in sensor:
-                    table = sensor.getNode(str(line[0]))
-                    break
+            for group in nodes:
+                tables = group._v_children
+                for sensor in tables:
+                    if sensor == str(line[0]):
+                        table = tables[sensor]
+                        break
             row = table.row
             row['serialNum'] = line[0]
             row['timeSec'] = line[1]
@@ -102,8 +102,7 @@ class DataHandler(object):
     def getRangeData(self, startTime, finishTime, serial=None):
         #acquire database
         self.__lock.acquire()
-        group = self.__dataFile.root.sensorData
-        nodes = group._v_children
+        nodes = self.__dataFile.listNodes('/')
         
         dataList = []
         rangeData = finishTime - startTime
@@ -116,9 +115,10 @@ class DataHandler(object):
         cond = '(timeSec >= startTime) & (timeSec <= finishTime)'
         condvars = {'startTime' : startTime, 'finishTime' : finishTime}
         
-        for name, value in nodes:
-            for nm, sensor in value:
-                result = [row.fetch_all_fields() for row in sensor.where(cond, condvars, step = stepVal)]
+        for group in nodes:
+            tables = group._v_children
+            for table in tables:
+                result = [row.fetch_all_fields() for row in tables[table].where(cond, condvars, step = stepVal)]
                 dataList.append(result)       
         self.__lock.release()   
         
