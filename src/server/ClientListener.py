@@ -24,8 +24,8 @@ import ClientHandlerConstants as CHC
 from database import DataHandler
 
 """
-This class listens on a TCP port for client connections and accepts the connection.  It then creates 
-an instance of ClientAdder, which updates the new client's data, adds the client to the list of connected clients
+This class listens on a TCP port for client connections and accepts the connection.  It then adds the 
+client to the list of connected clients
 """
 
 class ClientListener(object):
@@ -110,7 +110,7 @@ class ClientServer(threading.Thread):
                             disconnected.append(client)
                     continue
                 
-                # otherwise, read range requests from clients
+                # otherwise, read requests from clients
                 remaining = CHC.CLIENT_PACKET_SIZE
                 try:
                     while remaining > 0:
@@ -124,15 +124,20 @@ class ClientServer(threading.Thread):
                     if header == 'r':
                         print "Getting Ranges from %r to %r" % (rangeStart, rangeEnd)
                         rangeData = self.__dataHandler.getRangeData(rangeStart, rangeEnd)
-                        numRows = len(rangeData)
-                        length = struct.pack('I', numRows)
-                        print "Sending length..."
+                        totalLength = 0
+                        for lst in rangeData:
+                            totalLength = totalLength + len(lst)
+                        print "totalLength: %r" % totalLength
+                        length = struct.pack('=I', totalLength)
                         sock.send(length)
-                        print "Send length (%r rows)" % numRows
+                        print "Sending length (%r rows)" % totalLength
                         
-                        for row in rangeData:
-                            string = struct.pack("=HIH8d", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])
-                            sock.send(" ".join(string))
+                        for lst in rangeData:
+                            for row in lst:
+                                string = struct.pack("=HIH8d", row[8], row[10], row[9], row[0], row[1],
+                                                     row[2], row[3], row[4], row[5], row[6], row[7])
+                                sock.send(str(string))
+                                
                             
                     elif header == 't':
                         if sock not in realTimeClients:
@@ -141,7 +146,7 @@ class ClientServer(threading.Thread):
                     elif header == 's':
                         if sock in realTimeClients:
                             realTimeClients.remove(sock)
-                            sock.send(struct.pack('c', '\x00'))
+                            sock.send('Z')
                     else:
                         raise TypeError, "Header is not defined"
                 except socket.error:

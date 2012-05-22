@@ -1,7 +1,7 @@
 from os import path
 import struct
 from datetime import datetime
-from threading import Semaphore
+from threading import Lock
 
 from tables import *
 import numpy
@@ -38,30 +38,38 @@ This object can be treated like a Monitor.
 """
 
 READCOUNT = 1000
-displayedData = 100
+displayedData = 1000
 
 class DataHandler(object):
 
     def __init__(self):
-        self.__lock = Semaphore()
+        self.__lock = Lock()
         if not path.exists('SensorDatabase'):
             self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
-            group = self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')
-            self.__dataFile.createTable(group, 'data', Record, 'Data since %s' % datetime.now())	    
+            self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')    
         else:
             self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
-        self.__firstRead = True
+        
+    def createSensorTable(self, name):
+        self.__lock.acquire()
+        group = self.__dataFile.root.sensorData
+        tables = group._v_children
+        if name not in tables:
+            self.__dataFile.createTable(group, name, Record, 'Data since %s' % datetime.now())
+        self.__lock.release()
 
     def appendRows(self, data):
         #acquire database
         self.__lock.acquire()
+        group = self.__dataFile.root.sensorData
         #get the data table
-        table = self.__dataFile.root.sensorData.data
-        row = table.row
+        tables = group._v_children
 
         numRows = len(data)
         for i in xrange(numRows):
             line = struct.unpack('=HIH8d', str(data[i]))
+            table = tables[str(line[0])]
+            row = table.row
             row['serialNum'] = line[0]
             row['timeSec'] = line[1]
             row['timeMilli'] = line[2]
@@ -75,77 +83,36 @@ class DataHandler(object):
             row['col8'] = line[10]
             # adding this row to the table
             row.append()
+            table.flush()
 
-        # this saves the table to the file    
-        table.flush()
         #release database
         self.__lock.release()
 
     def getRangeData(self, startTime, finishTime, serial=None):
         #acquire database
         self.__lock.acquire()
-        #get the data table
-        table = self.__dataFile.root.sensorData.data
-        dataList = []
+        group = self.__dataFile.root.sensorData
+        tables = group._v_children
         
+        dataList = []
         rangeData = finishTime - startTime
+        
         if rangeData > displayedData:
-            stepVal = rangeData / displayedData
+            stepVal = (rangeData * 100)/ displayedData
         else:
             stepVal = 1
-            
+        
         cond = '(timeSec >= startTime) & (timeSec <= finishTime)'
         condvars = {'startTime' : startTime, 'finishTime' : finishTime}
-           #1. result = [[i['timeSec'], i['serialNum']] for i in table.where(cond)]       
-        result = [row.fetch_all_fields() for row in table.where(cond, condvars, step = stepVal)]
-        self.__lock.release()
         
-           #3. result = [row['timeSec'] for row in table.iterrows(step=50000) if row['timeSec'] >= startTime and row['timeSec'] <= finishTime]
-           #4. for i in table.where(cond):
-               #dataList.append(i['timeSec'])
-        #result = table.readSorted(sortby='timeSec', step=stepVal)
-
-        #for i in range(len(result)):
-        #    if result[i][8] 
-        #sd = sortData()
-        #final = sd.quicksort(result)
+        for name, value in tables:
+            result = [row.fetch_all_fields() for row in value.where(cond, condvars, step = stepVal)]
+            dataList.append(result)       
+        self.__lock.release()   
         
-        return result
+        return dataList
 
-    def sendDB(self):
-        # acquir database
-        self.__lock.acquire()
-        # close the db
-        self.__dataFile.close()
-        # open the file in binary mode
-        self.__dataFile = open('SensorDatabase', mode = 'rb')
-        if not self.__firstRead:
-            # read from where we left off
-            self.__dataFile.seek(self.__filePosition)
-
-        # read a bunch of data    
-        count = 0
-        data = bytearray("")
-        while count < READCOUNT:
-            line = self.__dataFile.readline()
-            if line == "":
-                break
-            data.extend(line)
-            count += 1
-
-        # save where we are in the file
-        self.__filePosition = self.__dataFile.tell()
-        self.__dataFile.close()
-
-        # re open the db in append mode
-        self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
-        self.__lock.release()
-        if self.__firstRead:
-            self.__firstRead = False
-
-        return(data)
-
-
+    
 class sortData(object):
     
     def __init__(self):

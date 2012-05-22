@@ -101,6 +101,7 @@ def Main():
             #connect
             dataSock.connect((sensorIP[0], port))
             newSensor = s.Sensor(serialNum, dataSock)
+            db.createSensorTable(str(serialNum))
             sensorList.append(newSensor)
             if len(sensorList) > 20:
                 HISTORYSIZE = len(sensorList) * 100

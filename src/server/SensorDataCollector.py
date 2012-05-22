@@ -6,6 +6,7 @@ import struct
 
 from Sensor import Sensor
 from database import DataHandler
+from database import sortData
 from ClientHandlerConstants import LOCALDATA, DATASIZE, SELECT_TIMEOUT
 
 #Timeout for select to update it's sensor list if needed
