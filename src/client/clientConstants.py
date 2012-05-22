@@ -18,6 +18,7 @@ ClientHandler Constants
 """
 
 HOSTPORT = 4908
+LOCALHOST = '127.0.0.1'
 
 PACKETSIZE = 72
 HEADERSIZE = 2
