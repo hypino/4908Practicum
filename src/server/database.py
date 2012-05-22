@@ -1,4 +1,3 @@
-from os import path
 import struct
 from datetime import datetime
 from threading import Lock
@@ -44,18 +43,27 @@ class DataHandler(object):
 
     def __init__(self):
         self.__lock = Lock()
-        if not path.exists('SensorDatabase'):
-            self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
-            self.__dataFile.createGroup('/', 'sensorData', 'Group of data from sensors')    
-        else:
-            self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
+        self.__dataFile = openFile('SensorDatabase', mode = 'a', title = 'Sensor data file')
         
     def createSensorTable(self, name):
         self.__lock.acquire()
-        group = self.__dataFile.root.sensorData
+        group = self.__dataFile.root
         tables = group._v_children
-        if name not in tables:
-            self.__dataFile.createTable(group, name, Record, 'Data since %s' % datetime.now())
+        newGroup = True
+        for node in self.__dataFile.listNodes('/'):
+            if len(node._v_children) < 10:
+                newGroup = False
+                useGroup = node
+                break
+        if newGroup:
+            useGroup = self.__dataFile.createGroup('/', str(len(tables)+1), '')
+        newTable = True
+        for node in self.__dataFile.listNodes('/'):
+            if name in node:
+                newTable = False
+        if newTable:
+             self.__dataFile.createTable(useGroup, name, Record, 'Data since %s' % datetime.now())
+        print self.__dataFile
         self.__lock.release()
 
     def appendRows(self, data):
@@ -63,12 +71,15 @@ class DataHandler(object):
         self.__lock.acquire()
         group = self.__dataFile.root.sensorData
         #get the data table
-        tables = group._v_children
+        nodes = group._v_children
 
         numRows = len(data)
         for i in xrange(numRows):
             line = struct.unpack('=HIH8d', str(data[i]))
-            table = tables[str(line[0])]
+            for sensor in nodes:
+                if str(line[0]) in sensor:
+                    table = sensor.getNode(str(line[0]))
+                    break
             row = table.row
             row['serialNum'] = line[0]
             row['timeSec'] = line[1]
@@ -92,7 +103,7 @@ class DataHandler(object):
         #acquire database
         self.__lock.acquire()
         group = self.__dataFile.root.sensorData
-        tables = group._v_children
+        nodes = group._v_children
         
         dataList = []
         rangeData = finishTime - startTime
@@ -105,9 +116,10 @@ class DataHandler(object):
         cond = '(timeSec >= startTime) & (timeSec <= finishTime)'
         condvars = {'startTime' : startTime, 'finishTime' : finishTime}
         
-        for name, value in tables:
-            result = [row.fetch_all_fields() for row in value.where(cond, condvars, step = stepVal)]
-            dataList.append(result)       
+        for name, value in nodes:
+            for nm, sensor in value:
+                result = [row.fetch_all_fields() for row in sensor.where(cond, condvars, step = stepVal)]
+                dataList.append(result)       
         self.__lock.release()   
         
         return dataList
