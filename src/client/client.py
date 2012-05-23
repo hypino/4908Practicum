@@ -11,12 +11,11 @@ class Client():
     
     def __init__(self, host=CC.LOCALHOST):
         self.__collector = None
-        self.__flag = False
         self.__host = host
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # connect to server        
-        print "Connecting to server"
+        print "Connecting to server %s" % self.__host
         while(1):        
             try:        
                 self.__socket.connect((host, CC.HOSTPORT))
@@ -34,11 +33,12 @@ class Client():
         while(1):
             print "Enter r for range data or t for real-time data.  s to stop:"
             
-			selection = raw_input()
+            selection = raw_input()
             
             if selection == 'r':
-                data = struct.pack("=cII", 's' , 0, 0)
-                self.__socket.send(data)
+                if self.__collector != None and self.__collector.isAlive():
+                    data = struct.pack("=cII", 's' , 0, 0)
+                    self.__socket.send(data)
                 
                 print "Enter Start of Range:"
                 try:
@@ -60,9 +60,7 @@ class Client():
                 self.__socket.send(data) 
                 print "Waiting for length..."
                 length = self.__socket.recv(4)
-                print length
-                print len(length)
-                numRows = struct.unpack('I', length)
+                numRows = struct.unpack('=I', length)
                 print "Received length, expecting %r rows" % numRows[0]
                 self.__collector = UICollector('h', int(numRows[0]), self.__socket)
                 self.__collector.join()
@@ -75,15 +73,14 @@ class Client():
                     pass
                 data = struct.pack("=cII", 't' , 0, 0)
                 self.__socket.send(data)
-                self.__collector == UICollector('r', -1, self.__socket)
+                self.__collector = UICollector('r', -1, self.__socket)
                 continue
                 
             elif selection == 's':
-                data = struct.pack("=cII", 's' , 0, 0)
-                self.__socket.send(data)
                 if self.__collector != None and self.__collector.isAlive():
+                    data = struct.pack("=cII", 's' , 0, 0)
+                    self.__socket.send(data)
                     self.__collector.join()
-                
                 continue
                 
             else:
@@ -105,7 +102,35 @@ class UICollector(threading.Thread):
         
     def run(self):
         self.getData(self.__length)
-                    
+
+    def getData(self, length):
+        count = 0
+        while(length == -1 or length > 0):
+            remaining = CC.DATASIZE   
+            data = bytearray("")
+            #Read realtime data from the socket
+            if self.__socket.recv(1, socket.MSG_PEEK) == 'Z':
+               self.__socket.recv(1)
+               break
+            
+            while remaining > 0:
+                try:
+                    recv = self.__socket.recv(remaining)
+                    data.extend(recv)
+                    remaining -= len(recv)
+                except socket.error:
+                    print "failed to receive on this iteration"
+                    exit(1)
+            self.displayData(data)
+            
+            if length != -1:
+                length = length - 1
+        
+        if self.__type == 'r':
+            self.__realTimeFile.close()
+        else:
+            self.__historyFile.close()
+            
     def displayData(self, data):
         # unpack the data: Serial No, Seconds, MilliSeconds, 8 * Data
         line = struct.unpack('=HIH8d', str(data))
@@ -121,26 +146,3 @@ class UICollector(threading.Thread):
             
         else:
             return
-
-    def getData(self, length):
-        while(length == -1 or length > 0):
-        
-            remaining = CC.DATASIZE   
-            data = bytearray("")
-            # Read realtime data from the socket
-            if self.__socket.recv(1, socket.MSG_PEEK) == '\x00':
-                break
-            
-            while remaining > 0:
-                try:
-                    recv = self.__socket.recv(remaining)
-                    data.extend(recv)
-                    remaining -= len(recv)
-                except socket.error:
-                    exit(1)
-                
-                self.displayData(data)
-            
-            if length != -1:
-                length = length - 1
-        

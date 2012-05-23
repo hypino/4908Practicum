@@ -39,18 +39,15 @@ class ClientListener(object):
         self.__listLock = threading.Semaphore()
         self.__clientList = []
         self.__clientServer = ClientServer(self.__clientList, self.__listLock, self.__dataHandler)
-        self.__firstRecordTime = 0
         self.listen()
         
     def listen(self):
-        self.__listenSocket.listen(5) #allows for a backlog of 5 sockets
+        self.__listenSocket.listen(1) #allows for a backlog of 5 sockets
         print "Listening for clients..."
         while(1):
             newSocket, newAdd = self.__listenSocket.accept()
-            newSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.__listLock.acquire()  # attempt to gain access to the client list
+            newSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # attempt to gain access to the client list
             self.__clientList.append(newSocket)
-            self.__listLock.release()
             print "Client has connected."
     
     def setFirstTime(self, time):
@@ -71,9 +68,7 @@ class ClientServer(threading.Thread):
             try:  
                 self.__localSocket.connect(CHC.LOCALDATA)
                 print ("Local Connection established")
-                self.__listLock.acquire()
                 self.__clientList.insert(0, self.__localSocket)
-                self.__listLock.release()
                 break
             except:
                 continue
@@ -87,28 +82,25 @@ class ClientServer(threading.Thread):
         data = bytearray()
         
         while True:
-            self.__listLock.acquire()
             # wait for data from SensorDataCollector, or range requests from clients
             active = select.select(self.__clientList, [], [], CHC.SELECT_TIMEOUT)
-            self.__listLock.release()
             
             if len(active[0]) == 0:
                 continue
            
-            for socket in active[0]:
+            for sock in active[0]:
                 # empty the buffer from previous passes
                 del data[:]
                 # if the local socket has data send it to the clients
-                if socket is self.__localSocket:
+                if sock is self.__localSocket:
                     # read data from self.localSocket
                     remaining = CHC.DATASIZE + 2
                     while remaining > 0:
-                        recv = socket.recv(remaining)
+                        recv = sock.recv(remaining)
                         data.extend(recv)
                         remaining -= len(recv)
                         
                     # attempt to gain access to the client list
-                    self.__listLock.acquire()
                     # loop through the list and send the data to clients
                     for client in realTimeClients:
                         try:
@@ -116,42 +108,51 @@ class ClientServer(threading.Thread):
                         except:
                             #connection reset by peer
                             disconnected.append(client)
-                            continue
-                        
-                    self.__listLock.release() # release the list
                     continue
                 
                 # otherwise, read range requests from clients
                 remaining = CHC.CLIENT_PACKET_SIZE
                 try:
                     while remaining > 0:
-                        recv = socket.recv(remaining)
+                        recv = sock.recv(remaining)
                         if recv == '':
-                            raise Exception, "Connection reset by peer."
+                            raise socket.error, "Connection reset by peer."
                         data.extend(recv)
                         remaining -= len(recv)
         
                     header, rangeStart, rangeEnd = struct.unpack("=cII", str(data))
-                    
                     if header == 'r':
-                        realTimeClients.remove(socket)
+                        print "Getting Ranges from %r to %r" % (rangeStart, rangeEnd)
                         rangeData = self.__dataHandler.getRangeData(rangeStart, rangeEnd)
-                        socket.send(rangeData)
+                        numRows = len(rangeData)
+                        length = struct.pack('I', numRows)
+                        print "Sending length..."
+                        sock.send(length)
+                        print "Send length (%r rows)" % numRows
+                        
+                        for row in rangeData:
+                            string = struct.pack("=HIH8d", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])
+                            sock.send(" ".join(string))
+                            
                     elif header == 't':
-                        realTimeClients.append(socket)
+                        if sock not in realTimeClients:
+                            realTimeClients.append(sock)
+                            
                     elif header == 's':
-                        realTimeClients.remove(socket)
+                        if sock in realTimeClients:
+                            realTimeClients.remove(sock)
+                            sock.send(struct.pack('c', '\x00'))
                     else:
-                        raise Exception, "Header is not defined"
-                except:
-                    disconnected.append(socket)
-                    continue
+                        raise TypeError, "Header is not defined"
+                except socket.error:
+                    disconnected.append(sock)
                 
                 # remove all disconnected clients
-                for close in disconnected:
-                    close.close()
-                    self.__listLock.acquire()
-                    self.__clientList.remove(close)
-                    self.__listLock.release()
+                for client in disconnected:
+                    client.close()
+                    if client in realTimeClients:
+                        realTimeClients.remove(client)
+                    self.__clientList.remove(client)
                     print "Client disconnected"
+                    
                 del disconnected[:]

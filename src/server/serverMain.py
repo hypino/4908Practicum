@@ -86,7 +86,7 @@ def Main():
             port = ord(data[2]) + ord(data[3]) * 16**2
             
             # check serial num here
-            # if it's in the list, continue  
+            # if it's in the list, continue
             if(len(sensorList) != 0):    
                 for i in sensorList:
                     serialOld = i.getSerial()
@@ -95,13 +95,12 @@ def Main():
                         break
                 if(sensorExist == True):
                     continue
-            
             # if not, add to the list    
             # create TCP Socket            
             dataSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             #connect
             dataSock.connect((sensorIP[0], port))
-            newSensor = s.Sensor(serialNum, dataSock)                 
+            newSensor = s.Sensor(serialNum, dataSock)
             sensorList.append(newSensor)
             if len(sensorList) > 20:
                 HISTORYSIZE = len(sensorList) * 100
