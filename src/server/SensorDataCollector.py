@@ -75,12 +75,12 @@ class SensorDataCollector(threading.Thread):
             while remaining > 0:
                 data = sock.recv(remaining)
                 if data == '':
-                    raise Exception
+                    raise socket.error
                 raw.extend(data)
                 remaining -= len(data)
             #Append to sending buffer
             self.__sendBuffer.append(raw)
-        except:
+        except socket.error:
             #connect reset by peer
             self.__disconnected.append(sensor)
             return	
